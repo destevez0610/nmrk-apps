@@ -9,6 +9,7 @@ export const addActivityEvent = (
   detail?: string,
   provider?: string,
   meta?: Record<string, unknown>,
+  author?: string,
 ): ActivityEvent => {
   const apps = getApplications();
   const app = apps.find((a) => a.id === appId);
@@ -21,6 +22,7 @@ export const addActivityEvent = (
     title,
     detail,
     provider,
+    author,
     meta,
   };
 
