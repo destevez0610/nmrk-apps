@@ -4,6 +4,8 @@ import { BUSINESS_STRUCTURES, INDUSTRY_TYPES, US_STATES, CANADIAN_PROVINCES } fr
 import { formatPhone } from '@/lib/formatPhone';
 import { formatEin } from '@/lib/formatEin';
 import { formatSsn } from '@/lib/formatSsn';
+import { formatZip } from '@/lib/formatZip';
+import { scrollToFirstError } from '@/lib/scrollToError';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -37,6 +39,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
     if (!bp.phoneNumber.trim()) e.phoneNumber = 'Required';
     if (!bp.industryType) e.industryType = 'Required';
     setErrors(e);
+    if (Object.keys(e).length > 0) scrollToFirstError();
     return Object.keys(e).length === 0;
   };
 
@@ -114,7 +117,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
             {errors.state && <p className="field-error">{errors.state}</p>}
           </div>
           <div>
-            <input className="field-input" placeholder="ZIP" value={bp.zip} onChange={(e) => update({ zip: e.target.value })} />
+            <input className="field-input" placeholder="ZIP" maxLength={10} value={bp.zip} onChange={(e) => update({ zip: formatZip(e.target.value) })} />
             {errors.zip && <p className="field-error">{errors.zip}</p>}
           </div>
         </div>

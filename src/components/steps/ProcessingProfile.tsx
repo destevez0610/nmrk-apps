@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import MoneyInput from '@/components/MoneyInput';
+import { scrollToFirstError } from '@/lib/scrollToError';
 
 interface Props {
   onNext: () => void;
@@ -38,6 +39,7 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
       e.refundPolicyUrl = 'Required when Card-Not-Present > 50%';
     }
     setErrors(e);
+    if (Object.keys(e).length > 0) scrollToFirstError();
     return Object.keys(e).length === 0;
   };
 
