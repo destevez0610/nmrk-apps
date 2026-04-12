@@ -3,7 +3,11 @@ import { useApplication } from '@/context/ApplicationContext';
 import { OwnerData, US_STATES, CANADIAN_PROVINCES } from '@/types/application';
 import { formatPhone } from '@/lib/formatPhone';
 import { formatSsn } from '@/lib/formatSsn';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 interface Props {
   onNext: () => void;
@@ -122,7 +126,24 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="field-label">Date of Birth *</label>
-              <input type="date" className="field-input" max={maxDob} value={owner.dob} onChange={(e) => updateOwner(owner.id, { dob: e.target.value })} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button type="button" className={cn("field-input flex items-center justify-between text-left w-full", !owner.dob && "text-muted-foreground")}>
+                    {owner.dob ? format(new Date(owner.dob + 'T00:00:00'), 'MM/dd/yyyy') : 'mm/dd/yyyy'}
+                    <CalendarIcon className="h-4 w-4 opacity-50" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={owner.dob ? new Date(owner.dob + 'T00:00:00') : undefined}
+                    onSelect={(date) => updateOwner(owner.id, { dob: date ? format(date, 'yyyy-MM-dd') : '' })}
+                    toDate={new Date(maxDob + 'T00:00:00')}
+                    fromDate={new Date(1900, 0, 1)}
+                    defaultMonth={owner.dob ? new Date(owner.dob + 'T00:00:00') : new Date(maxDob + 'T00:00:00')}
+                  />
+                </PopoverContent>
+              </Popover>
               {errors[`${idx}.dob`] && <p className="field-error">{errors[`${idx}.dob`]}</p>}
             </div>
             <div>

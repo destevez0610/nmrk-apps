@@ -4,6 +4,11 @@ import { BUSINESS_STRUCTURES, INDUSTRY_TYPES, US_STATES, CANADIAN_PROVINCES } fr
 import { formatPhone } from '@/lib/formatPhone';
 import { formatEin } from '@/lib/formatEin';
 import { formatSsn } from '@/lib/formatSsn';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 interface Props {
   onNext: () => void;
@@ -129,7 +134,23 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
 
       <div>
         <label className="field-label">Business Start Date <span className="text-xs font-normal text-muted-foreground">(Optional)</span></label>
-        <input type="date" className="field-input" max={new Date().toISOString().split('T')[0]} value={bp.businessStartDate} onChange={(e) => update({ businessStartDate: e.target.value })} />
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className={cn("field-input flex items-center justify-between text-left", !bp.businessStartDate && "text-muted-foreground")}>
+              {bp.businessStartDate ? format(new Date(bp.businessStartDate + 'T00:00:00'), 'MM/dd/yyyy') : 'mm/dd/yyyy'}
+              <CalendarIcon className="h-4 w-4 opacity-50" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={bp.businessStartDate ? new Date(bp.businessStartDate + 'T00:00:00') : undefined}
+              onSelect={(date) => update({ businessStartDate: date ? format(date, 'yyyy-MM-dd') : '' })}
+              toDate={new Date()}
+              fromDate={new Date(1900, 0, 1)}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="flex justify-between pt-4">
