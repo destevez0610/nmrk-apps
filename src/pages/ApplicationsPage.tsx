@@ -1098,7 +1098,7 @@ const ApplicationsPage = () => {
                   </select>
                 </div>
                 {/* Desktop tabs */}
-                <div className="hidden sm:flex gap-1 overflow-x-auto">
+                <div className="hidden sm:flex gap-1 overflow-x-auto pb-3">
                   {tabs.map((t) => (
                     <button
                       key={t.id}
