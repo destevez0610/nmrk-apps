@@ -38,26 +38,20 @@ type SortDir = 'asc' | 'desc';
 
 const SectionHeader = ({
   title,
-  sectionNumber,
   editing,
   onStartEdit,
   onSave,
   onCancel,
 }: {
   title: string;
-  sectionNumber: number;
+  sectionNumber?: number;
   editing: boolean;
   onStartEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
 }) => (
   <div className="flex items-center justify-between mb-4">
-    <div className="flex items-center gap-3">
-      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold">
-        {sectionNumber}
-      </span>
-      <h3 className="text-base font-bold text-foreground">{title}</h3>
-    </div>
+    <h3 className="text-base font-bold text-foreground">{title}</h3>
     {editing ? (
       <div className="flex items-center gap-2">
         <button onClick={onCancel} className="btn-secondary text-xs px-3 py-1.5">Cancel</button>
