@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { ApplicationProvider, useApplication } from '@/context/ApplicationContext';
 import ProgressBar from '@/components/ProgressBar';
 import StepWrapper from '@/components/StepWrapper';
@@ -11,6 +11,7 @@ import DocumentUpload from '@/components/steps/DocumentUpload';
 import ReviewSubmit from '@/components/steps/ReviewSubmit';
 import SectionChecklist from '@/components/SectionChecklist';
 import { useAutoSave, loadDraft, clearDraft } from '@/hooks/useAutoSave';
+import { getApplications, updateApplicationData } from '@/lib/applicationsStore';
 import { Save, ClipboardList } from 'lucide-react';
 
 const STEP_LABELS = [
@@ -25,15 +26,34 @@ const STEP_LABELS = [
 const ApplicationContent = () => {
   const { step } = useParams<{ step: string }>();
   const navigate = useNavigate();
-  const { currentStep, setCurrentStep, direction, setDirection, data, setData } = useApplication();
+  const location = useLocation();
+  const { currentStep, setCurrentStep, direction, setDirection, data, setData, storedAppId, setStoredAppId } = useApplication();
   const [saveFlash, setSaveFlash] = useState(false);
   const [showResume, setShowResume] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const stepNum = parseInt(step || '1', 10) - 1;
 
+  // Load stored application data on mount
   useEffect(() => {
+    if (initialized) return;
+    const stateAppId = (location.state as any)?.appId as string | undefined;
+    if (stateAppId) {
+      const apps = getApplications();
+      const stored = apps.find((a) => a.id === stateAppId);
+      if (stored) {
+        setStoredAppId(stateAppId);
+        setData(stored.data);
+        // Update status to in-progress
+        updateApplicationData(stateAppId, { status: 'in-progress' });
+        setInitialized(true);
+        return;
+      }
+    }
+    // Fallback: check for draft
     const draft = loadDraft();
     if (draft && stepNum === 0) setShowResume(true);
+    setInitialized(true);
   }, []);
 
   useEffect(() => {
@@ -41,6 +61,13 @@ const ApplicationContent = () => {
       setCurrentStep(stepNum);
     }
   }, [stepNum]);
+
+  // Sync data back to stored application whenever data or step changes
+  useEffect(() => {
+    if (storedAppId && initialized) {
+      updateApplicationData(storedAppId, { data, status: 'in-progress' });
+    }
+  }, [data, currentStep, storedAppId, initialized]);
 
   const { manualSave } = useAutoSave(data, currentStep, true);
 
@@ -61,6 +88,9 @@ const ApplicationContent = () => {
 
   const handleManualSave = () => {
     manualSave();
+    if (storedAppId) {
+      updateApplicationData(storedAppId, { data });
+    }
     setSaveFlash(true);
     setTimeout(() => setSaveFlash(false), 2000);
   };

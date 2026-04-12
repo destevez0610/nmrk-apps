@@ -11,7 +11,7 @@ import SignaturePad from '@/components/SignaturePad';
 import DocThumbnail from '@/components/DocThumbnail';
 import ReadOnlyField from '@/components/ReadOnlyField';
 import { format } from 'date-fns';
-import { createApplication } from '@/lib/applicationsStore';
+import { updateApplicationData, createApplication } from '@/lib/applicationsStore';
 
 interface Props {
   onPrev: () => void;
@@ -81,7 +81,7 @@ const CollapsibleSection = ({
 };
 
 const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
-  const { data, isSubmitted, setIsSubmitted, confirmationId, setConfirmationId, signature, setSignature } = useApplication();
+  const { data, isSubmitted, setIsSubmitted, confirmationId, setConfirmationId, signature, setSignature, storedAppId } = useApplication();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sigError, setSigError] = useState('');
   const [editTarget, setEditTarget] = useState<number | null>(null);
@@ -106,13 +106,15 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
     setSigError('');
     setIsSubmitting(true);
     await new Promise((r) => setTimeout(r, 3000));
-    const id = `MAV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-    setConfirmationId(id);
-    // Persist the submitted application with signature
-    const stored = createApplication(data, 'submitted', id);
-    // Update signature on the stored record
-    const { updateApplicationData } = await import('@/lib/applicationsStore');
-    updateApplicationData(stored.id, { signature });
+    const confId = `MAV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    setConfirmationId(confId);
+    // Update existing stored application or create new one
+    if (storedAppId) {
+      updateApplicationData(storedAppId, { status: 'submitted', confirmationId: confId, data, signature });
+    } else {
+      const stored = createApplication(data, 'submitted', confId);
+      updateApplicationData(stored.id, { signature });
+    }
     setIsSubmitted(true);
     setIsSubmitting(false);
   };
