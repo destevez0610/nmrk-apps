@@ -141,6 +141,7 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
             </div>
           </div>
           {errors.cnpBreakdown && <p className="field-error">{errors.cnpBreakdown}</p>}
+        </div>
       )}
 
       <div className="flex justify-between pt-4">
