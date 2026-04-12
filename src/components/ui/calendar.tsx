@@ -31,55 +31,83 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
   const years: number[] = [];
   for (let y = toYear; y >= fromYear; y--) years.push(y);
 
+  const goMonth = (delta: number) => {
+    const d = new Date(navMonth);
+    d.setMonth(d.getMonth() + delta);
+    setNavMonth(d);
+  };
+
   return (
     <div>
-      {/* Month / Year selectors */}
-      <div className="flex items-center justify-center gap-2 px-3 pt-3 pb-1">
-        <select
-          value={navMonth.getMonth()}
-          onChange={(e) => {
-            const d = new Date(navMonth);
-            d.setMonth(Number(e.target.value));
-            setNavMonth(d);
-          }}
-          className="text-sm font-medium bg-background border border-input rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring"
+      {/* Nav row: < Month Year > */}
+      <div className="flex items-center justify-between px-3 pt-3 pb-1">
+        <button
+          type="button"
+          onClick={() => goMonth(-1)}
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          )}
         >
-          {months.map((m, i) => (
-            <option key={m} value={i}>{m}</option>
-          ))}
-        </select>
-        <select
-          value={navMonth.getFullYear()}
-          onChange={(e) => {
-            const d = new Date(navMonth);
-            d.setFullYear(Number(e.target.value));
-            setNavMonth(d);
-          }}
-          className="text-sm font-medium bg-background border border-input rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring"
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        <div className="flex items-center gap-2">
+          <select
+            value={navMonth.getMonth()}
+            onChange={(e) => {
+              const d = new Date(navMonth);
+              d.setMonth(Number(e.target.value));
+              setNavMonth(d);
+            }}
+            className="text-sm font-medium bg-background border border-input rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {months.map((m, i) => (
+              <option key={m} value={i}>{m}</option>
+            ))}
+          </select>
+          <select
+            value={navMonth.getFullYear()}
+            onChange={(e) => {
+              const d = new Date(navMonth);
+              d.setFullYear(Number(e.target.value));
+              setNavMonth(d);
+            }}
+            className="text-sm font-medium bg-background border border-input rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => goMonth(1)}
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          )}
         >
-          {years.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
 
       <DayPicker
-        showOutsideDays={showOutsideDays}
+        showOutsideDays
+        fixedWeeks
         month={navMonth}
         onMonthChange={setNavMonth}
         className={cn("p-3 pointer-events-auto", className)}
         classNames={{
           months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
           month: "space-y-4",
-          caption: "flex justify-center pt-1 relative items-center",
-          caption_label: "text-sm font-medium hidden",
-          nav: "space-x-1 flex items-center",
-          nav_button: cn(
-            buttonVariants({ variant: "outline" }),
-            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-          ),
-          nav_button_previous: "absolute left-1",
-          nav_button_next: "absolute right-1",
+          caption: "hidden",
+          caption_label: "hidden",
+          nav: "hidden",
+          nav_button: "hidden",
+          nav_button_previous: "hidden",
+          nav_button_next: "hidden",
           table: "w-full border-collapse space-y-1",
           head_row: "flex",
           head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
