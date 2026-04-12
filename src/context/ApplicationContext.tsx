@@ -20,6 +20,8 @@ interface ApplicationContextType {
   setSignature: (sig: string | null) => void;
   storedAppId: string | null;
   setStoredAppId: (id: string | null) => void;
+  preFilledFields: Set<string>;
+  setPreFilledFields: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
 const ApplicationContext = createContext<ApplicationContextType | null>(null);
@@ -32,6 +34,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [confirmationId, setConfirmationId] = useState('');
   const [signature, setSignature] = useState<string | null>(null);
   const [storedAppId, setStoredAppId] = useState<string | null>(null);
+  const [preFilledFields, setPreFilledFields] = useState<Set<string>>(new Set());
 
   const updateData = useCallback(
     <K extends keyof MerchantApplication>(
@@ -68,6 +71,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setSignature,
         storedAppId,
         setStoredAppId,
+        preFilledFields,
+        setPreFilledFields,
       }}
     >
       {children}

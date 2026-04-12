@@ -18,7 +18,7 @@ interface Props {
 }
 
 const BusinessProfile = ({ onNext, onPrev }: Props) => {
-  const { data, updateData } = useApplication();
+  const { data, updateData, preFilledFields, setPreFilledFields } = useApplication();
   const bp = data.businessProfile;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -26,6 +26,19 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
   const update = (fields: Partial<typeof bp>) => updateData('businessProfile', fields);
   const isSoleProp = bp.businessStructure === 'Sole Proprietorship';
   const states = data.preQualification.location === 'Canada' ? CANADIAN_PROVINCES : US_STATES;
+
+  const pf = (key: string) => {
+    const fieldKey = `businessProfile.${key}`;
+    if (preFilledFields.has(fieldKey)) return 'field-prefilled';
+    return '';
+  };
+
+  const clearPf = (key: string) => {
+    const fieldKey = `businessProfile.${key}`;
+    if (preFilledFields.has(fieldKey)) {
+      setPreFilledFields((prev) => { const n = new Set(prev); n.delete(fieldKey); return n; });
+    }
+  };
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -54,7 +67,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="field-label">Legal Business Name *</label>
-          <input className="field-input" value={bp.legalName} onChange={(e) => update({ legalName: e.target.value })} />
+          <input className={`field-input ${pf('legalName')}`} value={bp.legalName} onChange={(e) => { clearPf('legalName'); update({ legalName: e.target.value }); }} />
           {errors.legalName && <p className="field-error">{errors.legalName}</p>}
         </div>
         <div>
@@ -127,7 +140,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="field-label">Business Phone *</label>
-          <input className="field-input" placeholder="(555) 123-4567" value={bp.phoneNumber} onChange={(e) => update({ phoneNumber: formatPhone(e.target.value) })} />
+          <input className={`field-input ${pf('phoneNumber')}`} placeholder="(555) 123-4567" value={bp.phoneNumber} onChange={(e) => { clearPf('phoneNumber'); update({ phoneNumber: formatPhone(e.target.value) }); }} />
           {errors.phoneNumber && <p className="field-error">{errors.phoneNumber}</p>}
         </div>
         <div>

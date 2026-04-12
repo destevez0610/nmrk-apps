@@ -26,12 +26,25 @@ const getMaxDob = () => {
 };
 
 const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
-  const { data, setData } = useApplication();
+  const { data, setData, preFilledFields, setPreFilledFields } = useApplication();
   const owners = data.owners;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openCalendarId, setOpenCalendarId] = useState<string | null>(null);
   const [otherTitleIds, setOtherTitleIds] = useState<Set<string>>(new Set());
   const states = data.preQualification.location === 'Canada' ? CANADIAN_PROVINCES : US_STATES;
+
+  const pf = (idx: number, key: string) => {
+    const fieldKey = `owner.${idx}.${key}`;
+    if (preFilledFields.has(fieldKey)) return 'field-prefilled';
+    return '';
+  };
+
+  const clearPf = (idx: number, key: string) => {
+    const fieldKey = `owner.${idx}.${key}`;
+    if (preFilledFields.has(fieldKey)) {
+      setPreFilledFields((prev) => { const n = new Set(prev); n.delete(fieldKey); return n; });
+    }
+  };
 
   const totalOwnership = owners.reduce((sum, o) => sum + (Number(o.ownershipPercent) || 0), 0);
   const maxDob = getMaxDob();
@@ -115,17 +128,17 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="field-label">First Name *</label>
-              <input className="field-input" value={owner.firstName} onChange={(e) => updateOwner(owner.id, { firstName: e.target.value })} />
+              <input className={`field-input ${pf(idx, 'firstName')}`} value={owner.firstName} onChange={(e) => { clearPf(idx, 'firstName'); updateOwner(owner.id, { firstName: e.target.value }); }} />
               {errors[`${idx}.firstName`] && <p className="field-error">{errors[`${idx}.firstName`]}</p>}
             </div>
             <div>
               <label className="field-label">Last Name *</label>
-              <input className="field-input" value={owner.lastName} onChange={(e) => updateOwner(owner.id, { lastName: e.target.value })} />
+              <input className={`field-input ${pf(idx, 'lastName')}`} value={owner.lastName} onChange={(e) => { clearPf(idx, 'lastName'); updateOwner(owner.id, { lastName: e.target.value }); }} />
               {errors[`${idx}.lastName`] && <p className="field-error">{errors[`${idx}.lastName`]}</p>}
             </div>
             <div>
               <label className="field-label">Title *</label>
-              <select className="field-input" value={TITLE_OPTIONS.includes(owner.title) ? owner.title : otherTitleIds.has(owner.id) || owner.title ? 'Other' : ''} onChange={(e) => {
+              <select className={`field-input ${pf(idx, 'title')}`} value={TITLE_OPTIONS.includes(owner.title) ? owner.title : otherTitleIds.has(owner.id) || owner.title ? 'Other' : ''} onChange={(e) => {
                 if (e.target.value === 'Other') {
                   setOtherTitleIds((prev) => new Set(prev).add(owner.id));
                   updateOwner(owner.id, { title: '' });
@@ -176,7 +189,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
             </div>
             <div>
               <label className="field-label">Ownership % *</label>
-              <input type="number" className="field-input" min={1} max={100}
+              <input type="number" className={`field-input ${pf(idx, 'ownershipPercent')}`} min={1} max={100}
                 value={owner.ownershipPercent} onChange={(e) => updateOwner(owner.id, { ownershipPercent: e.target.value ? Number(e.target.value) : '' })} />
               {errors[`${idx}.ownership`] && <p className="field-error">{errors[`${idx}.ownership`]}</p>}
             </div>
@@ -185,11 +198,11 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="field-label">Email</label>
-              <input type="email" className="field-input" value={owner.email} onChange={(e) => updateOwner(owner.id, { email: e.target.value })} />
+              <input type="email" className={`field-input ${pf(idx, 'email')}`} value={owner.email} onChange={(e) => { clearPf(idx, 'email'); updateOwner(owner.id, { email: e.target.value }); }} />
             </div>
             <div>
               <label className="field-label">Phone</label>
-              <input className="field-input" placeholder="(555) 123-4567" value={owner.phone} onChange={(e) => updateOwner(owner.id, { phone: formatPhone(e.target.value) })} />
+              <input className={`field-input ${pf(idx, 'phone')}`} placeholder="(555) 123-4567" value={owner.phone} onChange={(e) => { clearPf(idx, 'phone'); updateOwner(owner.id, { phone: formatPhone(e.target.value) }); }} />
             </div>
           </div>
 
