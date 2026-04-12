@@ -30,6 +30,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
   const owners = data.owners;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openCalendarId, setOpenCalendarId] = useState<string | null>(null);
+  const [otherTitleIds, setOtherTitleIds] = useState<Set<string>>(new Set());
   const states = data.preQualification.location === 'Canada' ? CANADIAN_PROVINCES : US_STATES;
 
   const totalOwnership = owners.reduce((sum, o) => sum + (Number(o.ownershipPercent) || 0), 0);
@@ -124,21 +125,21 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
             </div>
             <div>
               <label className="field-label">Title *</label>
-              <select className="field-input" value={TITLE_OPTIONS.includes(owner.title) ? owner.title : owner.title ? 'Other' : ''} onChange={(e) => updateOwner(owner.id, { title: e.target.value === 'Other' ? '' : e.target.value })}>
+              <select className="field-input" value={TITLE_OPTIONS.includes(owner.title) ? owner.title : otherTitleIds.has(owner.id) || owner.title ? 'Other' : ''} onChange={(e) => {
+                if (e.target.value === 'Other') {
+                  setOtherTitleIds((prev) => new Set(prev).add(owner.id));
+                  updateOwner(owner.id, { title: '' });
+                } else {
+                  setOtherTitleIds((prev) => { const s = new Set(prev); s.delete(owner.id); return s; });
+                  updateOwner(owner.id, { title: e.target.value });
+                }
+              }}>
                 <option value="">Select...</option>
                 {TITLE_OPTIONS.map((t) => <option key={t}>{t}</option>)}
                 <option value="Other">Other</option>
               </select>
-              {!TITLE_OPTIONS.includes(owner.title) && owner.title !== '' && (
+              {(otherTitleIds.has(owner.id) || (!TITLE_OPTIONS.includes(owner.title) && owner.title !== '')) && (
                 <input className="field-input mt-2" placeholder="Enter your title" value={owner.title} onChange={(e) => updateOwner(owner.id, { title: e.target.value })} />
-              )}
-              {owner.title === '' && !TITLE_OPTIONS.includes(owner.title) && (
-                (() => {
-                  const selectVal = document.querySelector(`[data-owner-title="${owner.id}"]`) as HTMLSelectElement;
-                  return selectVal?.value === 'Other' ? (
-                    <input className="field-input mt-2" placeholder="Enter your title" value={owner.title} onChange={(e) => updateOwner(owner.id, { title: e.target.value })} />
-                  ) : null;
-                })()
               )}
               {errors[`${idx}.title`] && <p className="field-error">{errors[`${idx}.title`]}</p>}
             </div>
