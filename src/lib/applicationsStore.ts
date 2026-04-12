@@ -77,11 +77,11 @@ export const updateApplicationData = (id: string, data: Partial<StoredApplicatio
   const idx = apps.findIndex((a) => a.id === id);
   if (idx >= 0) {
     apps[idx] = { ...apps[idx], ...data, updatedAt: new Date().toISOString() };
-    localStorage.setItem(STORE_KEY, JSON.stringify(apps));
+    localStorage.setItem(STORE_KEY, JSON.stringify(apps, sanitizeForStorage));
   }
 };
 
 export const deleteApplication = (id: string) => {
   const apps = getApplications().filter((a) => a.id !== id);
-  localStorage.setItem(STORE_KEY, JSON.stringify(apps));
+  localStorage.setItem(STORE_KEY, JSON.stringify(apps, sanitizeForStorage));
 };
