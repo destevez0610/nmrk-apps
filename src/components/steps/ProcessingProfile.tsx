@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
+import MoneyInput from '@/components/MoneyInput';
 
 interface Props {
   onNext: () => void;
@@ -50,32 +51,17 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="field-label">Monthly Volume *</label>
-          <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-            <input type="number" className="field-input pl-7"
-              value={pp.monthlyVolume}
-              onChange={(e) => update({ monthlyVolume: e.target.value ? Number(e.target.value) : '' })} />
-          </div>
+          <MoneyInput value={pp.monthlyVolume} onChange={(v) => update({ monthlyVolume: v })} placeholder="25,000" />
           {errors.monthlyVolume && <p className="field-error">{errors.monthlyVolume}</p>}
         </div>
         <div>
           <label className="field-label">Average Ticket *</label>
-          <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-            <input type="number" className="field-input pl-7"
-              value={pp.averageTicket}
-              onChange={(e) => update({ averageTicket: e.target.value ? Number(e.target.value) : '' })} />
-          </div>
+          <MoneyInput value={pp.averageTicket} onChange={(v) => update({ averageTicket: v })} placeholder="150" />
           {errors.averageTicket && <p className="field-error">{errors.averageTicket}</p>}
         </div>
         <div>
           <label className="field-label">High Ticket *</label>
-          <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-            <input type="number" className="field-input pl-7"
-              value={pp.highTicket}
-              onChange={(e) => update({ highTicket: e.target.value ? Number(e.target.value) : '' })} />
-          </div>
+          <MoneyInput value={pp.highTicket} onChange={(v) => update({ highTicket: v })} placeholder="5,000" />
           {errors.highTicket && <p className="field-error">{errors.highTicket}</p>}
         </div>
       </div>
