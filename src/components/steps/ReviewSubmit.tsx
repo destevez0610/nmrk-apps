@@ -232,6 +232,23 @@ const ReviewSubmit = ({ onPrev, onGoToStep }: Props) => {
         <button onClick={onPrev} className="btn-secondary">Back</button>
         <button onClick={handleSubmit} className="btn-accent">Submit Application</button>
       </div>
+
+      <AlertDialog open={editTarget !== null} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave Review Page?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You'll be taken back to edit this section. Your other information is saved and you can return to review when ready.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (editTarget !== null && onGoToStep) onGoToStep(editTarget); }}>
+              Continue to Edit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
