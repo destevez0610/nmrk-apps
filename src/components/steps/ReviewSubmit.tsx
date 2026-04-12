@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Loader2, Pencil, FileText, Save, Printer } from 'lucide-react';
+import { CheckCircle2, Loader2, Pencil, FileText, Save, Printer, ChevronDown } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import SignaturePad from '@/components/SignaturePad';
 import { format } from 'date-fns';
 
@@ -56,7 +57,6 @@ const DocThumbnail = ({ file, frosted = false }: { file: File; frosted?: boolean
   );
 };
 
-/** Read-only field styled like a filled form input */
 const ReadOnlyField = ({ label, value, optional }: { label: string; value: string | number; optional?: boolean }) => (
   <div>
     <label className="field-label">
@@ -69,13 +69,15 @@ const ReadOnlyField = ({ label, value, optional }: { label: string; value: strin
   </div>
 );
 
-const SectionHeader = ({
+const CollapsibleSection = ({
   title,
   subtitle,
   sectionNumber,
   stepIndex,
   onEdit,
   rightContent,
+  children,
+  defaultOpen = true,
 }: {
   title: string;
   subtitle: string;
@@ -83,32 +85,50 @@ const SectionHeader = ({
   stepIndex: number;
   onEdit?: (stepIndex: number) => void;
   rightContent?: React.ReactNode;
-}) => (
-  <div className="flex items-start justify-between mb-4">
-    <div className="flex items-start gap-3">
-      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold mt-0.5">
-        {sectionNumber}
-      </span>
-      <div>
-        <h3 className="text-base font-bold text-foreground">{title}</h3>
-        <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) => {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="flex items-start justify-between mb-4">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="flex items-start gap-3 group text-left">
+            <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold mt-0.5">
+              {sectionNumber}
+            </span>
+            <div>
+              <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
+                {title}
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+              </h3>
+              <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+            </div>
+          </button>
+        </CollapsibleTrigger>
+        <div className="flex items-center gap-3">
+          {rightContent}
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(stepIndex)}
+              className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors font-medium px-2.5 py-1.5 rounded-lg bg-primary/5 hover:bg-primary/10"
+            >
+              <Pencil className="w-3 h-3" />
+              Edit
+            </button>
+          )}
+        </div>
       </div>
-    </div>
-    <div className="flex items-center gap-3">
-      {rightContent}
-      {onEdit && (
-        <button
-          type="button"
-          onClick={() => onEdit(stepIndex)}
-          className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors font-medium px-2.5 py-1.5 rounded-lg bg-primary/5 hover:bg-primary/10"
-        >
-          <Pencil className="w-3 h-3" />
-          Edit
-        </button>
-      )}
-    </div>
-  </div>
-);
+      <CollapsibleContent>
+        <div className="pl-10">
+          {children}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
 
 const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
   const { data, isSubmitted, setIsSubmitted, confirmationId, setConfirmationId, signature, setSignature } = useApplication();
@@ -177,7 +197,6 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
 
   return (
     <div className="space-y-4">
-      {/* Document container */}
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         {/* Document header */}
         <div className="bg-primary/[0.04] border-b border-border px-6 py-5">
@@ -206,10 +225,9 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
         {/* Document body */}
         <div className="px-6 py-6 space-y-8">
 
-          {/* ─── Section 1: Business Profile ─── */}
-          <section>
-            <SectionHeader title="Business Profile" subtitle="Entity and contact information" sectionNumber={1} stepIndex={0} onEdit={editHandler} />
-            <div className="space-y-4 pl-10">
+          {/* Section 1: Business Profile */}
+          <CollapsibleSection title="Business Profile" subtitle="Entity and contact information" sectionNumber={1} stepIndex={0} onEdit={editHandler}>
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ReadOnlyField label="Legal Business Name" value={bp.legalName} />
                 <ReadOnlyField label="DBA (Doing Business As)" value={bp.dba} optional />
@@ -242,14 +260,13 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                 <ReadOnlyField label="Business Start Date" value={format(new Date(bp.businessStartDate + 'T00:00:00'), 'MM/dd/yyyy')} optional />
               )}
             </div>
-          </section>
+          </CollapsibleSection>
 
           <div className="border-t border-border/40" />
 
-          {/* ─── Section 2: Processing Profile ─── */}
-          <section>
-            <SectionHeader title="Processing Profile" subtitle="Volume and transaction details" sectionNumber={2} stepIndex={1} onEdit={editHandler} />
-            <div className="space-y-4 pl-10">
+          {/* Section 2: Processing Profile */}
+          <CollapsibleSection title="Processing Profile" subtitle="Volume and transaction details" sectionNumber={2} stepIndex={1} onEdit={editHandler}>
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <ReadOnlyField label="Monthly Volume" value={`$${Number(pp.monthlyVolume).toLocaleString()}`} />
                 <ReadOnlyField label="Average Ticket" value={`$${Number(pp.averageTicket).toLocaleString()}`} />
@@ -267,7 +284,6 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                     <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.cardNotPresentPercent}%</div>
                   </div>
                 </div>
-                {/* Visual bar */}
                 <div className="mt-3 h-2 rounded-full bg-secondary overflow-hidden flex">
                   <div className="bg-primary transition-all duration-300" style={{ width: `${pp.cardPresentPercent}%` }} />
                   <div className="bg-accent transition-all duration-300" style={{ width: `${pp.cardNotPresentPercent}%` }} />
@@ -300,25 +316,24 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                 <ReadOnlyField label="Refund Policy URL" value={pp.refundPolicyUrl} />
               )}
             </div>
-          </section>
+          </CollapsibleSection>
 
           <div className="border-t border-border/40" />
 
-          {/* ─── Section 3: Ownership & Principals ─── */}
-          <section>
-            <SectionHeader
-              title="Ownership & Principals"
-              subtitle="All owners with ≥25% stake"
-              sectionNumber={3}
-              stepIndex={2}
-              onEdit={editHandler}
-              rightContent={
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${totalOwnership === 100 ? 'bg-accent/10 text-accent' : 'bg-warning/10 text-warning'}`}>
-                  {totalOwnership}% / 100%
-                </span>
-              }
-            />
-            <div className="space-y-6 pl-10">
+          {/* Section 3: Ownership & Principals */}
+          <CollapsibleSection
+            title="Ownership & Principals"
+            subtitle="All owners with ≥25% stake"
+            sectionNumber={3}
+            stepIndex={2}
+            onEdit={editHandler}
+            rightContent={
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${totalOwnership === 100 ? 'bg-accent/10 text-accent' : 'bg-warning/10 text-warning'}`}>
+                {totalOwnership}% / 100%
+              </span>
+            }
+          >
+            <div className="space-y-6">
               {data.owners.map((o, i) => (
                 <div key={o.id} className={`space-y-4 ${i > 0 ? 'pt-4 border-t border-dashed border-border/50' : ''}`}>
                   <h4 className="text-sm font-semibold text-foreground">Owner {i + 1}</h4>
@@ -350,14 +365,13 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                 </div>
               ))}
             </div>
-          </section>
+          </CollapsibleSection>
 
           <div className="border-t border-border/40" />
 
-          {/* ─── Section 4: Banking & Settlement ─── */}
-          <section>
-            <SectionHeader title="Banking & Settlement" subtitle="Where funds will be deposited" sectionNumber={4} stepIndex={3} onEdit={editHandler} />
-            <div className="space-y-4 pl-10">
+          {/* Section 4: Banking & Settlement */}
+          <CollapsibleSection title="Banking & Settlement" subtitle="Where funds will be deposited" sectionNumber={4} stepIndex={3} onEdit={editHandler}>
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ReadOnlyField label="Bank Name" value={bk.bankName} />
                 <ReadOnlyField label="Account Type" value={bk.accountType} />
@@ -375,15 +389,13 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                 </div>
               )}
             </div>
-          </section>
+          </CollapsibleSection>
 
           <div className="border-t border-border/40" />
 
-          {/* ─── Section 5: Documents ─── */}
-          <section>
-            <SectionHeader title="Document Upload" subtitle="Supporting documentation for underwriting" sectionNumber={5} stepIndex={4} onEdit={editHandler} />
-            <div className="space-y-4 pl-10">
-              {/* Government ID */}
+          {/* Section 5: Documents */}
+          <CollapsibleSection title="Document Upload" subtitle="Supporting documentation for underwriting" sectionNumber={5} stepIndex={4} onEdit={editHandler}>
+            <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-3">Driver's License / Government ID</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -405,7 +417,6 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                   </div>
                 </div>
               </div>
-              {/* Bank Statements */}
               {docs.bankStatements.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
@@ -420,7 +431,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                 </div>
               )}
             </div>
-          </section>
+          </CollapsibleSection>
         </div>
 
         {/* Signature area */}
