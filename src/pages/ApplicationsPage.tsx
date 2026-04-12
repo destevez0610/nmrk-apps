@@ -720,12 +720,12 @@ const ApplicationsPage = () => {
                 events={getActivityLog(selected!.id)}
                 onAddNote={(note) => {
                   addActivityEvent(selected!.id, 'note', 'Note added', note);
-                  // Re-select to refresh
                   const freshApps = getApplications();
                   const freshApp = freshApps.find((a) => a.id === selected!.id);
                   if (freshApp) setSelected(freshApp);
                   refresh();
                 }}
+                onResend={handleResend}
               />
             </div>
           </section>
