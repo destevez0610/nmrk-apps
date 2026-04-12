@@ -20,7 +20,7 @@ const slideVariants = {
   exit: (d: number) => ({ x: d > 0 ? -250 : 250, opacity: 0 }),
 };
 
-const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
+const PreQualification = ({ onQualified }: { onQualified: (appId: string) => void }) => {
   const { data, updateData, setData } = useApplication();
   const pq = data.preQualification;
   const [step, setStep] = useState(0);
@@ -159,7 +159,8 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
     setErrors(e);
     if (Object.keys(e).length > 0) return false;
 
-    createApplication(data, 'pre-qual');
+    const storedApp = createApplication(data, 'pre-qual');
+    onQualified(storedApp.id);
     return true;
   };
 

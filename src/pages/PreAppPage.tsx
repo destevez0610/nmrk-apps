@@ -6,7 +6,7 @@ const PreAppContent = () => {
   const navigate = useNavigate();
   const { data, updateData } = useApplication();
 
-  const handleQualified = () => {
+  const handleQualified = (appId: string) => {
     const pq = data.preQualification;
     // Populate processing profile from pre-app
     updateData('processingProfile', {
@@ -35,7 +35,7 @@ const PreAppContent = () => {
       zip: '',
     }));
     updateData('owners', owners);
-    navigate('/application/1');
+    navigate('/application/1', { state: { appId } });
   };
 
   return <PreQualification onQualified={handleQualified} />;
