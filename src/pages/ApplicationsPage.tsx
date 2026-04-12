@@ -886,42 +886,40 @@ const ApplicationsPage = () => {
         </div>
       </div>
 
-      {/* Application Detail Modal */}
+      {/* Application Detail Panel */}
       <AnimatePresence>
         {selected && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/50"
             onClick={handleCloseModal}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2 }}
-              className="bg-card rounded-xl border border-border shadow-xl w-full max-w-3xl h-[85vh] flex flex-col"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="absolute right-0 top-0 h-full bg-card border-l border-border shadow-xl flex flex-col w-full sm:w-[420px] md:w-[480px] lg:w-[540px] min-w-[33.333%]"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-                <div>
-                  <h2 className="text-lg font-bold text-foreground">
+              {/* Panel Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-bold text-foreground truncate">
                     {selected.data.preQualification.companyName || 'Application'}
                   </h2>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_LABELS[selected.status]?.color}`}>
                       {STATUS_LABELS[selected.status]?.label}
                     </span>
                     {selected.confirmationId && (
-                      <span className="text-xs text-muted-foreground font-mono">{selected.confirmationId}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">{selected.confirmationId}</span>
                     )}
-                    {/* Push status badges */}
                     {selected.pushHistory && selected.pushHistory.length > 0 && (
                       <>
                         {(() => {
-                          // Show latest status per provider
                           const latest = new Map<string, typeof selected.pushHistory[0]>();
                           selected.pushHistory.forEach((r) => latest.set(r.provider, r));
                           return Array.from(latest.values()).map((r) => {
@@ -951,7 +949,7 @@ const ApplicationsPage = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0 ml-2">
                   <button
                     onClick={() => setPushModalOpen(true)}
                     className="btn-accent text-xs px-3 py-1.5 flex items-center gap-1.5"
@@ -965,26 +963,41 @@ const ApplicationsPage = () => {
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="flex gap-1 px-6 py-2 border-b border-border overflow-x-auto shrink-0">
-                {tabs.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => handleTabSwitch(t.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                      activeTab === t.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-secondary'
-                    }`}
+              {/* Tabs - dropdown on mobile, inline on larger */}
+              <div className="px-5 py-2 border-b border-border shrink-0">
+                {/* Mobile dropdown */}
+                <div className="sm:hidden">
+                  <select
+                    value={activeTab}
+                    onChange={(e) => handleTabSwitch(e.target.value)}
+                    className="field-input text-xs py-1.5"
                   >
-                    <t.icon className="w-3.5 h-3.5" />
-                    {t.label}
-                  </button>
-                ))}
+                    {tabs.map((t) => (
+                      <option key={t.id} value={t.id}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* Desktop tabs */}
+                <div className="hidden sm:flex gap-1 overflow-x-auto">
+                  {tabs.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => handleTabSwitch(t.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                        activeTab === t.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:bg-secondary'
+                      }`}
+                    >
+                      <t.icon className="w-3.5 h-3.5" />
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Content */}
-              <div className="overflow-y-auto flex-1 px-6 py-4">
+              <div className="overflow-y-auto flex-1 px-5 py-4">
                 {renderModalContent()}
               </div>
             </motion.div>
