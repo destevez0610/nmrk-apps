@@ -11,6 +11,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import PrefilledBadge from '@/components/PrefilledBadge';
 
 interface Props {
   onNext: () => void;
@@ -66,7 +67,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="field-label">Legal Business Name *</label>
+          <label className="field-label">Legal Business Name *{pf('legalName') && <PrefilledBadge />}</label>
           <input className={`field-input ${pf('legalName')}`} value={bp.legalName} onChange={(e) => { clearPf('legalName'); update({ legalName: e.target.value }); }} />
           {errors.legalName && <p className="field-error">{errors.legalName}</p>}
         </div>
@@ -139,7 +140,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="field-label">Business Phone *</label>
+          <label className="field-label">Business Phone *{pf('phoneNumber') && <PrefilledBadge />}</label>
           <input className={`field-input ${pf('phoneNumber')}`} placeholder="(555) 123-4567" value={bp.phoneNumber} onChange={(e) => { clearPf('phoneNumber'); update({ phoneNumber: formatPhone(e.target.value) }); }} />
           {errors.phoneNumber && <p className="field-error">{errors.phoneNumber}</p>}
         </div>
