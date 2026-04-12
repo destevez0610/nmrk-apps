@@ -9,11 +9,24 @@ interface Props {
 }
 
 const ProcessingProfile = ({ onNext, onPrev }: Props) => {
-  const { data, updateData } = useApplication();
+  const { data, updateData, preFilledFields, setPreFilledFields } = useApplication();
   const pp = data.processingProfile;
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const update = (fields: Partial<typeof pp>) => updateData('processingProfile', fields);
+
+  const pf = (key: string) => {
+    const fieldKey = `processingProfile.${key}`;
+    if (preFilledFields.has(fieldKey)) return 'field-prefilled';
+    return '';
+  };
+
+  const clearPf = (key: string) => {
+    const fieldKey = `processingProfile.${key}`;
+    if (preFilledFields.has(fieldKey)) {
+      setPreFilledFields((prev) => { const n = new Set(prev); n.delete(fieldKey); return n; });
+    }
+  };
 
   const handleCardSplit = (field: 'cardPresentPercent' | 'cardNotPresentPercent', val: number) => {
     const clamped = Math.max(0, Math.min(100, val));
@@ -57,12 +70,12 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="field-label">Monthly Volume *</label>
-          <MoneyInput value={pp.monthlyVolume} onChange={(v) => update({ monthlyVolume: v })} placeholder="25,000" />
+          <MoneyInput value={pp.monthlyVolume} onChange={(v) => { clearPf('monthlyVolume'); update({ monthlyVolume: v }); }} placeholder="25,000" className={pf('monthlyVolume')} />
           {errors.monthlyVolume && <p className="field-error">{errors.monthlyVolume}</p>}
         </div>
         <div>
           <label className="field-label">Average Ticket *</label>
-          <MoneyInput value={pp.averageTicket} onChange={(v) => update({ averageTicket: v })} placeholder="150" />
+          <MoneyInput value={pp.averageTicket} onChange={(v) => { clearPf('averageTicket'); update({ averageTicket: v }); }} placeholder="150" className={pf('averageTicket')} />
           {errors.averageTicket && <p className="field-error">{errors.averageTicket}</p>}
         </div>
         <div>

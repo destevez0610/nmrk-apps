@@ -901,7 +901,7 @@ const ApplicationsPage = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="absolute right-0 top-0 h-full bg-card border-l border-border shadow-xl flex flex-col w-full sm:w-[420px] md:w-[480px] lg:w-[540px] min-w-[33.333%]"
+              className="absolute right-0 top-0 h-full bg-card border-l border-border shadow-xl flex flex-col w-full sm:w-[560px] md:w-[640px] lg:w-[780px] min-w-[50%]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Panel Header */}
