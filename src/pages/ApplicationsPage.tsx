@@ -323,6 +323,11 @@ const ApplicationsPage = () => {
                     <ReadOnlyField label="Stripe Kickoff" value={pq.wasKickedOffStripe === true ? 'Yes' : pq.wasKickedOffStripe === false ? 'No' : '—'} />
                     <ReadOnlyField label="Business Bank Account" value={pq.hasBusinessBankAccount === true ? 'Yes' : pq.hasBusinessBankAccount === false ? 'No' : '—'} />
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <ReadOnlyField label="Has Photo ID" value={pq.hasPhotoId ? 'Yes' : 'No'} />
+                    <ReadOnlyField label="Has Bank Statement" value={pq.hasBankStatement ? 'Yes' : 'No'} />
+                    <ReadOnlyField label="Has SSN/EIN" value={pq.hasSsnEin ? 'Yes' : 'No'} />
+                  </div>
                 </div>
               )}
             </section>
@@ -365,6 +370,7 @@ const ApplicationsPage = () => {
                           <ReadOnlyField label="Title" value={p.title} />
                           <ReadOnlyField label="Ownership %" value={`${p.ownershipPercent}%`} />
                         </div>
+                        <ReadOnlyField label="Best Time to Contact" value={p.bestTimeToContact} optional />
                       </div>
                     )}
                   </div>
