@@ -87,6 +87,22 @@ const ApplicationsPage = () => {
   const [activeTab, setActiveTab] = useState('preQual');
   const [unsavedDialog, setUnsavedDialog] = useState<{ action: () => void } | null>(null);
   const [pushModalOpen, setPushModalOpen] = useState(false);
+  const [resending, setResending] = useState<string | null>(null);
+
+  const handleResend = async (providerId: PushProviderId) => {
+    if (!selected || resending) return;
+    const provider = PUSH_PROVIDERS.find((p) => p.id === providerId);
+    if (!provider) return;
+    setResending(providerId);
+    try {
+      await pushApplication(selected.id, providerId, provider.name);
+    } catch {}
+    setResending(null);
+    const freshApps = getApplications();
+    const freshApp = freshApps.find((a) => a.id === selected.id);
+    if (freshApp) setSelected(freshApp);
+    refresh();
+  };
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('all');
