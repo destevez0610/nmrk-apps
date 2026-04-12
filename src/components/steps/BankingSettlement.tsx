@@ -63,8 +63,9 @@ const BankingSettlement = ({ onNext, onPrev }: Props) => {
         </div>
         <div>
           <label className="field-label">Account Number *</label>
-          <input className="field-input font-mono" value={bk.accountNumber}
-            onChange={(e) => update({ accountNumber: e.target.value })} />
+          <input className="field-input font-mono" maxLength={17} placeholder="4–17 digits"
+            value={bk.accountNumber}
+            onChange={(e) => update({ accountNumber: e.target.value.replace(/\D/g, '').slice(0, 17) })} />
           {errors.accountNumber && <p className="field-error">{errors.accountNumber}</p>}
         </div>
       </div>
