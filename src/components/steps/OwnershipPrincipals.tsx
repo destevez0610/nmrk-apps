@@ -189,7 +189,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
               {errors[`${idx}.ssn`] && <p className="field-error">{errors[`${idx}.ssn`]}</p>}
             </div>
             <div>
-              <label className="field-label">Ownership % *</label>
+              <label className="field-label">Ownership % *{pf(idx, 'ownershipPercent') && <PrefilledBadge />}</label>
               <input type="number" className={`field-input ${pf(idx, 'ownershipPercent')}`} min={1} max={100}
                 value={owner.ownershipPercent} onChange={(e) => updateOwner(owner.id, { ownershipPercent: e.target.value ? Number(e.target.value) : '' })} />
               {errors[`${idx}.ownership`] && <p className="field-error">{errors[`${idx}.ownership`]}</p>}
