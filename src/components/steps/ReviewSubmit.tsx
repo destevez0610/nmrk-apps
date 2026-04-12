@@ -1,13 +1,15 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Loader2, Pencil, FileText, Save, Printer, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { CheckCircle2, Loader2, Pencil, Save, Printer, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import SignaturePad from '@/components/SignaturePad';
+import DocThumbnail from '@/components/DocThumbnail';
+import ReadOnlyField from '@/components/ReadOnlyField';
 import { format } from 'date-fns';
 
 interface Props {
@@ -15,59 +17,6 @@ interface Props {
   onGoToStep?: (step: number) => void;
   onSaveAndGoToStep?: (step: number) => void;
 }
-
-const truncateName = (name: string, maxLen = 24): string => {
-  if (name.length <= maxLen) return name;
-  const ext = name.includes('.') ? '.' + name.split('.').pop() : '';
-  const base = name.slice(0, name.length - ext.length);
-  const keep = maxLen - ext.length - 3;
-  return base.slice(0, Math.max(keep, 6)) + '...' + ext;
-};
-
-const isImage = (file: File) => file.type.startsWith('image/');
-
-const DocThumbnail = ({ file, frosted = false }: { file: File; frosted?: boolean }) => {
-  const previewUrl = useMemo(() => {
-    if (isImage(file)) return URL.createObjectURL(file);
-    return null;
-  }, [file]);
-
-  return (
-    <div className="rounded border border-border overflow-hidden bg-secondary w-full">
-      <div className="aspect-[4/3] flex items-center justify-center overflow-hidden relative">
-        {previewUrl ? (
-          <img
-            src={previewUrl}
-            alt={file.name}
-            className={`w-full h-full object-cover ${frosted ? 'blur-[6px] brightness-90' : ''}`}
-          />
-        ) : (
-          <FileText className="w-8 h-8 text-muted-foreground" />
-        )}
-        {frosted && (
-          <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
-        )}
-      </div>
-      <div className="px-2 py-1 bg-card border-t border-border">
-        <p className="text-[10px] text-muted-foreground truncate" title={file.name}>
-          {truncateName(file.name)}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const ReadOnlyField = ({ label, value, optional }: { label: string; value: string | number; optional?: boolean }) => (
-  <div>
-    <label className="field-label">
-      {label}
-      {optional && <span className="text-xs font-normal text-muted-foreground ml-1">(Optional)</span>}
-    </label>
-    <div className="field-input bg-secondary/50 cursor-default text-foreground">
-      {value || '—'}
-    </div>
-  </div>
-);
 
 const CollapsibleSection = ({
   title,
@@ -398,14 +347,16 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                 <ReadOnlyField label="Routing Number" value={bk.routingNumber} />
                 <ReadOnlyField label="Account Number" value={bk.accountNumber ? `****${bk.accountNumber.slice(-4)}` : '—'} />
               </div>
-              {bk.voidedCheckFile && (
-                <div>
-                  <label className="field-label">Voided Check or Bank Letter</label>
+              <div>
+                <label className="field-label">Voided Check or Bank Letter</label>
+                {bk.voidedCheckFile ? (
                   <div className="w-32 mt-1">
                     <DocThumbnail file={bk.voidedCheckFile} frosted />
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">Not uploaded</div>
+                )}
+              </div>
             </div>
           </CollapsibleSection>
 
@@ -422,7 +373,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                     {docs.driversLicenseFront ? (
                       <DocThumbnail file={docs.driversLicenseFront} frosted />
                     ) : (
-                      <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">—</div>
+                      <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">Not uploaded</div>
                     )}
                   </div>
                   <div>
@@ -430,14 +381,14 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                     {docs.driversLicenseBack ? (
                       <DocThumbnail file={docs.driversLicenseBack} frosted />
                     ) : (
-                      <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">—</div>
+                      <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">Not uploaded</div>
                     )}
                   </div>
                 </div>
               </div>
-              {docs.bankStatements.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
+                {docs.bankStatements.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {docs.bankStatements.map((f, i) => (
                       <div key={i}>
@@ -446,8 +397,10 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">No statements uploaded</div>
+                )}
+              </div>
             </div>
           </CollapsibleSection>
         </div>

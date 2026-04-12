@@ -10,6 +10,8 @@ import {
   Building2, Users, CreditCard, Landmark, FileText as FileTextIcon,
   ArrowUpDown, Filter, Save, Send, History,
 } from 'lucide-react';
+import DocThumbnail from '@/components/DocThumbnail';
+import ReadOnlyField from '@/components/ReadOnlyField';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -33,60 +35,6 @@ const TITLES = [
 
 type SortField = 'date' | 'company' | 'volume' | 'status';
 type SortDir = 'asc' | 'desc';
-
-/** Read-only field styled like a filled form input */
-const truncateName = (name: string, maxLen = 24): string => {
-  if (name.length <= maxLen) return name;
-  const ext = name.includes('.') ? '.' + name.split('.').pop() : '';
-  const base = name.slice(0, name.length - ext.length);
-  const keep = maxLen - ext.length - 3;
-  return base.slice(0, Math.max(keep, 6)) + '...' + ext;
-};
-
-const isImage = (file: File) => file.type.startsWith('image/');
-
-const DocThumbnail = ({ file, frosted = false }: { file: File; frosted?: boolean }) => {
-  const previewUrl = useMemo(() => {
-    if (isImage(file)) return URL.createObjectURL(file);
-    return null;
-  }, [file]);
-
-  return (
-    <div className="rounded border border-border overflow-hidden bg-secondary w-full">
-      <div className="aspect-[4/3] flex items-center justify-center overflow-hidden relative">
-        {previewUrl ? (
-          <img
-            src={previewUrl}
-            alt={file.name}
-            className={`w-full h-full object-cover ${frosted ? 'blur-[6px] brightness-90' : ''}`}
-          />
-        ) : (
-          <FileTextIcon className="w-8 h-8 text-muted-foreground" />
-        )}
-        {frosted && (
-          <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
-        )}
-      </div>
-      <div className="px-2 py-1 bg-card border-t border-border">
-        <p className="text-[10px] text-muted-foreground truncate" title={file.name}>
-          {truncateName(file.name)}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const ReadOnlyField = ({ label, value, optional }: { label: string; value: string | number | undefined | null; optional?: boolean }) => (
-  <div>
-    <label className="field-label">
-      {label}
-      {optional && <span className="text-xs font-normal text-muted-foreground ml-1">(Optional)</span>}
-    </label>
-    <div className="field-input bg-secondary/50 cursor-default text-foreground text-sm">
-      {value || '—'}
-    </div>
-  </div>
-);
 
 const SectionHeader = ({
   title,
@@ -620,6 +568,16 @@ const ApplicationsPage = () => {
                   <ReadOnlyField label="Routing Number" value={bk.routingNumber} />
                   <ReadOnlyField label="Account Number" value={bk.accountNumber ? `****${bk.accountNumber.slice(-4)}` : '—'} />
                 </div>
+                <div>
+                  <label className="field-label">Voided Check or Bank Letter</label>
+                  {bk.voidedCheckFile ? (
+                    <div className="w-32 mt-1">
+                      <DocThumbnail file={bk.voidedCheckFile} frosted />
+                    </div>
+                  ) : (
+                    <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">Not uploaded</div>
+                  )}
+                </div>
               </div>
             )}
           </section>
@@ -650,9 +608,9 @@ const ApplicationsPage = () => {
                   </div>
                 </div>
               </div>
-              {d.documents.bankStatements.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
+                {d.documents.bankStatements.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {d.documents.bankStatements.map((f, i) => (
                       <div key={i}>
@@ -661,11 +619,10 @@ const ApplicationsPage = () => {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-              {!d.documents.driversLicenseFront && !d.documents.driversLicenseBack && d.documents.bankStatements.length === 0 && (
-                <p className="text-sm text-muted-foreground">No documents uploaded.</p>
-              )}
+                ) : (
+                  <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">No statements uploaded</div>
+                )}
+              </div>
             </div>
           </section>
         )}
