@@ -122,7 +122,12 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
       {/* CNP Breakdown */}
       {pp.cardNotPresentPercent > 0 && (
         <div>
-          <label className="field-label">Card-Not-Present Breakdown</label>
+          <div className="flex items-center justify-between">
+            <label className="field-label">Card-Not-Present Breakdown</label>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${(pp.ecommercePercent || 0) + (pp.mailOrderPercent || 0) + (pp.phoneOrderPercent || 0) === 100 ? 'bg-accent/10 text-accent' : 'bg-warning/10 text-warning'}`}>
+              {(pp.ecommercePercent || 0) + (pp.mailOrderPercent || 0) + (pp.phoneOrderPercent || 0)}% / 100%
+            </span>
+          </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-xs text-muted-foreground">E-Commerce %</label>

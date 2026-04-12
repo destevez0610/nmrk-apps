@@ -122,7 +122,14 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
             </div>
             <div>
               <label className="field-label">Title *</label>
-              <input className="field-input" placeholder="CEO, Owner, etc." value={owner.title} onChange={(e) => updateOwner(owner.id, { title: e.target.value })} />
+              <select className="field-input" value={['CEO', 'CFO', 'COO', 'CTO', 'President', 'Vice President', 'Managing Member', 'Partner', 'Owner', 'Director', 'Secretary', 'Treasurer'].includes(owner.title) ? owner.title : owner.title ? 'Other' : ''} onChange={(e) => updateOwner(owner.id, { title: e.target.value === 'Other' ? '' : e.target.value })}>
+                <option value="">Select...</option>
+                {['CEO', 'CFO', 'COO', 'CTO', 'President', 'Vice President', 'Managing Member', 'Partner', 'Owner', 'Director', 'Secretary', 'Treasurer'].map((t) => <option key={t}>{t}</option>)}
+                <option value="Other">Other</option>
+              </select>
+              {!['CEO', 'CFO', 'COO', 'CTO', 'President', 'Vice President', 'Managing Member', 'Partner', 'Owner', 'Director', 'Secretary', 'Treasurer', ''].includes(owner.title) && (
+                <input className="field-input mt-2" placeholder="Enter your title" value={owner.title} onChange={(e) => updateOwner(owner.id, { title: e.target.value })} />
+              )}
               {errors[`${idx}.title`] && <p className="field-error">{errors[`${idx}.title`]}</p>}
             </div>
           </div>
