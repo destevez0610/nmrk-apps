@@ -773,9 +773,18 @@ const ApplicationsPage = () => {
                     )}
                   </div>
                 </div>
-                <button onClick={handleCloseModal} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPushModalOpen(true)}
+                    className="btn-accent text-xs px-3 py-1.5 flex items-center gap-1.5"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    Push App
+                  </button>
+                  <button onClick={handleCloseModal} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
               </div>
 
               {/* Tabs */}
