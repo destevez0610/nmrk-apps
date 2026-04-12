@@ -145,6 +145,7 @@ export interface StoredApplication {
   failReason?: string;
   activityLog?: ActivityEvent[];
   pushHistory?: PushRecord[];
+  signature?: string | null;
 }
 
 export const initialApplication: MerchantApplication = {
