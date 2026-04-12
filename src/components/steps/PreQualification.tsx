@@ -2,9 +2,14 @@ import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { PreQualificationData, PreQualPrincipal } from '@/types/application';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, AlertTriangle, CheckCircle2, Plus, Trash2, UserPlus, Users, ClipboardCheck } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 
-const BEST_TIMES = ['Morning (8am–12pm)', 'Afternoon (12pm–5pm)', 'Evening (5pm–8pm)', 'Anytime'];
+const TITLES = [
+  'CEO', 'CFO', 'COO', 'CTO', 'President', 'Vice President',
+  'Owner', 'Co-Owner', 'Managing Member', 'General Partner',
+  'Limited Partner', 'Director', 'Secretary', 'Treasurer',
+  'Sole Proprietor', 'Partner', 'Authorized Signer', 'Other',
+];
 
 const slideVariants = {
   enter: (d: number) => ({ x: d > 0 ? 250 : -250, opacity: 0 }),
@@ -90,7 +95,9 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
       e['0.ownership'] = 'Enter a valid percentage (1-100)';
     if (!p.bestTimeToContact) e['0.bestTime'] = 'Required';
     setErrors(e);
-    return Object.keys(e).length === 0;
+    if (!p.ownershipPercent || Number(p.ownershipPercent) <= 0 || Number(p.ownershipPercent) > 100)
+      e['0.ownership'] = 'Enter a valid percentage (1-100)';
+    setErrors(e);
   };
 
   // Step 1 validation: additional principals
