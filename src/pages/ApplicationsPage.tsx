@@ -423,6 +423,7 @@ const ApplicationsPage = () => {
         )}
 
         {activeTab === 'processing' && (
+          <>
           <section>
             <SectionHeader title="Processing Profile" sectionNumber={1} editing={isEditing('processing')} onStartEdit={() => startSectionEdit('processing')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
             {isEditing('processing') ? (
@@ -497,7 +498,6 @@ const ApplicationsPage = () => {
 
           <div className="border-t border-border/40" />
 
-          {/* ACH Section */}
           <section>
             <SectionHeader title="ACH Processing" sectionNumber={2} editing={isEditing('ach')} onStartEdit={() => startSectionEdit('ach')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
             {isEditing('ach') ? (
@@ -548,6 +548,7 @@ const ApplicationsPage = () => {
               </div>
             )}
           </section>
+          </>
         )}
 
         {activeTab === 'ownership' && (
