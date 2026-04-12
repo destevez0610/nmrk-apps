@@ -368,7 +368,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                 <label className="field-label">Voided Check or Bank Letter</label>
                 {bk.voidedCheckFile ? (
                   <div className="w-32 mt-1">
-                    <DocThumbnail file={bk.voidedCheckFile}>/>
+                    <DocThumbnail file={bk.voidedCheckFile} />
                   </div>
                 ) : (
                   <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">Not uploaded</div>
@@ -388,7 +388,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                   <div>
                     <label className="field-label">Front</label>
                     {docs.driversLicenseFront ? (
-                      <DocThumbnail file={docs.driversLicenseFront}>/>
+                      <DocThumbnail file={docs.driversLicenseFront} />
                     ) : (
                       <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">Not uploaded</div>
                     )}
@@ -396,7 +396,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                   <div>
                     <label className="field-label">Back</label>
                     {docs.driversLicenseBack ? (
-                      <DocThumbnail file={docs.driversLicenseBack}>/>
+                      <DocThumbnail file={docs.driversLicenseBack} />
                     ) : (
                       <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">Not uploaded</div>
                     )}
