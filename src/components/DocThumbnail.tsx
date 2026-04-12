@@ -55,6 +55,20 @@ const PdfPreview = ({ file }: { file: File }) => {
 };
 
 const DocThumbnail = ({ file }: { file: File }) => {
+  // Guard: if file was deserialized from JSON it won't be a real File
+  if (!isRealFile(file)) {
+    return (
+      <div className="rounded border border-border overflow-hidden bg-secondary w-full">
+        <div className="aspect-[4/3] flex items-center justify-center overflow-hidden">
+          <FileText className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <div className="px-2 py-1 bg-card border-t border-border">
+          <p className="text-[10px] text-muted-foreground truncate">File unavailable</p>
+        </div>
+      </div>
+    );
+  }
+
   const previewUrl = useMemo(() => {
     if (isImage(file)) return URL.createObjectURL(file);
     return null;
