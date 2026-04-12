@@ -424,6 +424,8 @@ const ApplicationsPage = () => {
                   <ReadOnlyField label="Industry Type" value={bp.industryType} />
                 </div>
                 {bp.ein && <ReadOnlyField label="EIN (Employer ID)" value={bp.ein} />}
+                {bp.ssn && <ReadOnlyField label="SSN" value={`***-**-${bp.ssn.replace(/\D/g, '').slice(-4)}`} />}
+                <ReadOnlyField label="Business Start Date" value={bp.businessStartDate} />
                 <div>
                   <label className="field-label">Physical Business Address</label>
                   <div className="field-input bg-secondary/50 cursor-default text-foreground mb-3">
