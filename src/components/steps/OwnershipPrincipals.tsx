@@ -11,6 +11,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 
+const TITLE_OPTIONS = ['CEO', 'CFO', 'COO', 'CTO', 'President', 'Vice President', 'Managing Member', 'Partner', 'Owner', 'Director', 'Secretary', 'Treasurer'];
+
 interface Props {
   onNext: () => void;
   onPrev: () => void;
@@ -122,13 +124,21 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
             </div>
             <div>
               <label className="field-label">Title *</label>
-              <select className="field-input" value={['CEO', 'CFO', 'COO', 'CTO', 'President', 'Vice President', 'Managing Member', 'Partner', 'Owner', 'Director', 'Secretary', 'Treasurer'].includes(owner.title) ? owner.title : owner.title ? 'Other' : ''} onChange={(e) => updateOwner(owner.id, { title: e.target.value === 'Other' ? '' : e.target.value })}>
+              <select className="field-input" value={TITLE_OPTIONS.includes(owner.title) ? owner.title : owner.title ? 'Other' : ''} onChange={(e) => updateOwner(owner.id, { title: e.target.value === 'Other' ? '' : e.target.value })}>
                 <option value="">Select...</option>
-                {['CEO', 'CFO', 'COO', 'CTO', 'President', 'Vice President', 'Managing Member', 'Partner', 'Owner', 'Director', 'Secretary', 'Treasurer'].map((t) => <option key={t}>{t}</option>)}
+                {TITLE_OPTIONS.map((t) => <option key={t}>{t}</option>)}
                 <option value="Other">Other</option>
               </select>
-              {!['CEO', 'CFO', 'COO', 'CTO', 'President', 'Vice President', 'Managing Member', 'Partner', 'Owner', 'Director', 'Secretary', 'Treasurer', ''].includes(owner.title) && (
+              {!TITLE_OPTIONS.includes(owner.title) && owner.title !== '' && (
                 <input className="field-input mt-2" placeholder="Enter your title" value={owner.title} onChange={(e) => updateOwner(owner.id, { title: e.target.value })} />
+              )}
+              {owner.title === '' && !TITLE_OPTIONS.includes(owner.title) && (
+                (() => {
+                  const selectVal = document.querySelector(`[data-owner-title="${owner.id}"]`) as HTMLSelectElement;
+                  return selectVal?.value === 'Other' ? (
+                    <input className="field-input mt-2" placeholder="Enter your title" value={owner.title} onChange={(e) => updateOwner(owner.id, { title: e.target.value })} />
+                  ) : null;
+                })()
               )}
               {errors[`${idx}.title`] && <p className="field-error">{errors[`${idx}.title`]}</p>}
             </div>
