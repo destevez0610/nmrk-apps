@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { BUSINESS_STRUCTURES, INDUSTRY_TYPES, US_STATES, CANADIAN_PROVINCES } from '@/types/application';
+import { formatPhone } from '@/lib/formatPhone';
 
 interface Props {
   onNext: () => void;
@@ -115,7 +116,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="field-label">Business Phone *</label>
-          <input className="field-input" value={bp.phoneNumber} onChange={(e) => update({ phoneNumber: e.target.value })} />
+          <input className="field-input" placeholder="(555) 123-4567" value={bp.phoneNumber} onChange={(e) => update({ phoneNumber: formatPhone(e.target.value) })} />
           {errors.phoneNumber && <p className="field-error">{errors.phoneNumber}</p>}
         </div>
         <div>
