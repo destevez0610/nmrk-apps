@@ -38,26 +38,20 @@ type SortDir = 'asc' | 'desc';
 
 const SectionHeader = ({
   title,
-  sectionNumber,
   editing,
   onStartEdit,
   onSave,
   onCancel,
 }: {
   title: string;
-  sectionNumber: number;
+  sectionNumber?: number;
   editing: boolean;
   onStartEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
 }) => (
   <div className="flex items-center justify-between mb-4">
-    <div className="flex items-center gap-3">
-      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold">
-        {sectionNumber}
-      </span>
-      <h3 className="text-base font-bold text-foreground">{title}</h3>
-    </div>
+    <h3 className="text-base font-bold text-foreground">{title}</h3>
     {editing ? (
       <div className="flex items-center gap-2">
         <button onClick={onCancel} className="btn-secondary text-xs px-3 py-1.5">Cancel</button>
@@ -297,7 +291,7 @@ const ApplicationsPage = () => {
             <section>
               <SectionHeader title="Pre-Qualification Details" sectionNumber={1} editing={isEditing('preQual')} onStartEdit={() => startSectionEdit('preQual')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
               {isEditing('preQual') ? (
-                <div className="space-y-3 pl-10">
+                <div className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <EditField label="Company Name" path="preQualification.companyName" />
                     <EditField label="Location" path="preQualification.location" options={['US', 'Canada', 'International']} />
@@ -309,7 +303,7 @@ const ApplicationsPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4 pl-10">
+                <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <ReadOnlyField label="Company Name" value={pq.companyName} />
                     <ReadOnlyField label="Location" value={pq.location} />
@@ -337,7 +331,7 @@ const ApplicationsPage = () => {
             {/* Principals */}
             <section>
               <SectionHeader title="Principals" sectionNumber={2} editing={isEditing('principals')} onStartEdit={() => startSectionEdit('principals')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
-              <div className="space-y-6 pl-10">
+              <div className="space-y-6">
                 {pq.principals.map((p, i) => (
                   <div key={p.id} className={`space-y-4 ${i > 0 ? 'pt-4 border-t border-dashed border-border/50' : ''}`}>
                     <h4 className="text-sm font-semibold text-foreground">{i === 0 ? 'Primary Principal' : `Principal ${i + 1}`}</h4>
@@ -393,7 +387,7 @@ const ApplicationsPage = () => {
           <section>
             <SectionHeader title="Business Profile" sectionNumber={1} editing={isEditing('business')} onStartEdit={() => startSectionEdit('business')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
             {isEditing('business') ? (
-              <div className="space-y-3 pl-10">
+              <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <EditField label="Legal Name" path="businessProfile.legalName" />
                   <EditField label="DBA" path="businessProfile.dba" />
@@ -419,7 +413,7 @@ const ApplicationsPage = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 pl-10">
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ReadOnlyField label="Legal Business Name" value={bp.legalName} />
                   <ReadOnlyField label="DBA (Doing Business As)" value={bp.dba} optional />
@@ -456,7 +450,7 @@ const ApplicationsPage = () => {
           <section>
             <SectionHeader title="Processing Profile" sectionNumber={1} editing={isEditing('processing')} onStartEdit={() => startSectionEdit('processing')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
             {isEditing('processing') ? (
-              <div className="space-y-3 pl-10">
+              <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <EditField label="Monthly Volume" path="processingProfile.monthlyVolume" type="number" />
                   <EditField label="Avg Ticket" path="processingProfile.averageTicket" type="number" />
@@ -476,7 +470,7 @@ const ApplicationsPage = () => {
                 <EditField label="Refund Policy URL" path="processingProfile.refundPolicyUrl" />
               </div>
             ) : (
-              <div className="space-y-4 pl-10">
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <ReadOnlyField label="Monthly Volume" value={pp.monthlyVolume ? `$${Number(pp.monthlyVolume).toLocaleString()}` : ''} />
                   <ReadOnlyField label="Average Ticket" value={pp.averageTicket ? `$${Number(pp.averageTicket).toLocaleString()}` : ''} />
@@ -530,7 +524,7 @@ const ApplicationsPage = () => {
           <section>
             <SectionHeader title="ACH Processing" sectionNumber={2} editing={isEditing('ach')} onStartEdit={() => startSectionEdit('ach')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
             {isEditing('ach') ? (
-              <div className="space-y-3 pl-10">
+              <div className="space-y-3">
                 <div>
                   <label className="field-label">Do you currently accept ACH payments?</label>
                   <div className="flex gap-3 mt-1">
@@ -562,7 +556,7 @@ const ApplicationsPage = () => {
                 )}
               </div>
             ) : (
-              <div className="space-y-4 pl-10">
+              <div className="space-y-4">
                 <ReadOnlyField label="Accepts ACH Payments" value={pp.acceptsAch ? 'Yes' : 'No'} />
                 {pp.acceptsAch && (
                   <>
@@ -583,7 +577,7 @@ const ApplicationsPage = () => {
         {activeTab === 'ownership' && (
           <section>
             <SectionHeader title="Ownership & Principals" sectionNumber={1} editing={isEditing('ownership')} onStartEdit={() => startSectionEdit('ownership')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
-            <div className="space-y-6 pl-10">
+            <div className="space-y-6">
               {d.owners.map((o, i) => (
                 <div key={o.id} className={`space-y-4 ${i > 0 ? 'pt-4 border-t border-dashed border-border/50' : ''}`}>
                   <h4 className="text-sm font-semibold text-foreground">Owner {i + 1}</h4>
@@ -649,7 +643,7 @@ const ApplicationsPage = () => {
           <section>
             <SectionHeader title="Banking & Settlement" sectionNumber={1} editing={isEditing('banking')} onStartEdit={() => startSectionEdit('banking')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
             {isEditing('banking') ? (
-              <div className="space-y-3 pl-10">
+              <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <EditField label="Bank Name" path="banking.bankName" />
                   <EditField label="Account Type" path="banking.accountType" options={['checking', 'savings']} />
@@ -660,7 +654,7 @@ const ApplicationsPage = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 pl-10">
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ReadOnlyField label="Bank Name" value={bk.bankName} />
                   <ReadOnlyField label="Account Type" value={bk.accountType} />
@@ -687,7 +681,7 @@ const ApplicationsPage = () => {
         {activeTab === 'documents' && (
           <section>
             <SectionHeader title="Supporting Documents" sectionNumber={1} editing={false} onStartEdit={() => {}} onSave={() => {}} onCancel={() => {}} />
-            <div className="space-y-4 pl-10">
+            <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-3">Driver's License / Government ID</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -742,13 +736,10 @@ const ApplicationsPage = () => {
 
         {activeTab === 'activity' && (
           <section>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                <History className="w-3.5 h-3.5" />
-              </span>
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-foreground">Activity Trail</h3>
             </div>
-            <div className="pl-10">
+            <div className="">
               <ActivityTrail
                 events={getActivityLog(selected!.id)}
                 onAddNote={(note) => {
