@@ -10,6 +10,8 @@ import {
   Building2, Users, CreditCard, Landmark, FileText as FileTextIcon,
   ArrowUpDown, Filter, Save, Send, History,
 } from 'lucide-react';
+import DocThumbnail from '@/components/DocThumbnail';
+import ReadOnlyField from '@/components/ReadOnlyField';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
