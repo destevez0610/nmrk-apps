@@ -180,7 +180,7 @@ const PreQualification = ({ onQualified }: { onQualified: (appId: string) => voi
   };
 
   const handleSubmit = () => {
-    if (validateEligibility()) onQualified();
+    validateEligibility();
   };
 
   const renderPrincipalFields = (p: PreQualPrincipal, idx: number, removable: boolean) => (
