@@ -402,6 +402,11 @@ const ApplicationsPage = () => {
                   <EditField label="Structure" path="businessProfile.businessStructure" />
                   <EditField label="Industry" path="businessProfile.industryType" />
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <EditField label="EIN" path="businessProfile.ein" />
+                  <EditField label="SSN" path="businessProfile.ssn" />
+                  <EditField label="Business Start Date" path="businessProfile.businessStartDate" type="date" />
+                </div>
                 <EditField label="Street Address" path="businessProfile.streetAddress" />
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <EditField label="City" path="businessProfile.city" />
