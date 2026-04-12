@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ApplicationProvider, useApplication } from '@/context/ApplicationContext';
 import ProgressBar from '@/components/ProgressBar';
 import StepWrapper from '@/components/StepWrapper';
@@ -10,7 +11,7 @@ import BankingSettlement from '@/components/steps/BankingSettlement';
 import DocumentUpload from '@/components/steps/DocumentUpload';
 import ReviewSubmit from '@/components/steps/ReviewSubmit';
 import { useAutoSave, loadDraft, clearDraft } from '@/hooks/useAutoSave';
-import { Save, RotateCcw } from 'lucide-react';
+import { Save, RotateCcw, ClipboardList } from 'lucide-react';
 
 const STEP_LABELS = [
   'Business Profile',
@@ -117,11 +118,18 @@ const WizardContent = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
-          <div>
+          <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-foreground tracking-tight">Merchant Application</h1>
             <p className="text-xs text-muted-foreground">Maverick Payments</p>
           </div>
-          <button
+          <div className="flex items-center gap-2">
+            <Link
+              to="/applications"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ClipboardList className="w-3.5 h-3.5" />
+              Applications
+            </Link>
             onClick={handleManualSave}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
               saveFlash
@@ -130,8 +138,18 @@ const WizardContent = () => {
             }`}
           >
             <Save className="w-3.5 h-3.5" />
-            {saveFlash ? 'Saved!' : 'Save Draft'}
-          </button>
+            <button
+              onClick={handleManualSave}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
+                saveFlash
+                  ? 'bg-accent/10 text-accent'
+                  : 'bg-secondary text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Save className="w-3.5 h-3.5" />
+              {saveFlash ? 'Saved!' : 'Save Draft'}
+            </button>
+          </div>
         </div>
         <ProgressBar currentStep={currentStep} totalSteps={STEP_LABELS.length} stepLabels={STEP_LABELS} />
         <StepWrapper stepKey={currentStep} direction={direction}>
