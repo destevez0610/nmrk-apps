@@ -11,6 +11,7 @@ import SignaturePad from '@/components/SignaturePad';
 import DocThumbnail from '@/components/DocThumbnail';
 import ReadOnlyField from '@/components/ReadOnlyField';
 import { format } from 'date-fns';
+import { createApplication } from '@/lib/applicationsStore';
 
 interface Props {
   onPrev: () => void;
@@ -107,6 +108,11 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
     await new Promise((r) => setTimeout(r, 3000));
     const id = `MAV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     setConfirmationId(id);
+    // Persist the submitted application with signature
+    const stored = createApplication(data, 'submitted', id);
+    // Update signature on the stored record
+    const { updateApplicationData } = await import('@/lib/applicationsStore');
+    updateApplicationData(stored.id, { signature });
     setIsSubmitted(true);
     setIsSubmitting(false);
   };

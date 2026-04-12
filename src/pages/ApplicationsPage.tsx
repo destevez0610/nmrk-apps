@@ -724,6 +724,18 @@ const ApplicationsPage = () => {
                   <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">No statements uploaded</div>
                 )}
               </div>
+
+              {/* Signature */}
+              <div className="border-t border-border/40 pt-4">
+                <h4 className="text-sm font-semibold text-foreground mb-3">Electronic Signature</h4>
+                {selected?.signature ? (
+                  <div className="border border-border rounded-lg p-3 bg-secondary/30 inline-block">
+                    <img src={selected.signature} alt="Signature" className="max-h-20" />
+                  </div>
+                ) : (
+                  <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">No signature on file</div>
+                )}
+              </div>
             </div>
           </section>
         )}
