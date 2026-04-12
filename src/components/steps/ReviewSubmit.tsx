@@ -242,7 +242,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
         <div className="px-6 py-6 space-y-8">
 
           {/* Section 1: Business Profile */}
-          <CollapsibleSection title="Business Profile" subtitle="Entity and contact information" sectionNumber={1} stepIndex={0} onEdit={editHandler}>
+          <CollapsibleSection title="Business Profile" subtitle="Entity and contact information" sectionNumber={1} stepIndex={0} onEdit={editHandler} open={openSections[1]} onToggle={toggleSection(1)}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ReadOnlyField label="Legal Business Name" value={bp.legalName} />
@@ -281,7 +281,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
           <div className="border-t border-border/40" />
 
           {/* Section 2: Processing Profile */}
-          <CollapsibleSection title="Processing Profile" subtitle="Volume and transaction details" sectionNumber={2} stepIndex={1} onEdit={editHandler}>
+          <CollapsibleSection title="Processing Profile" subtitle="Volume and transaction details" sectionNumber={2} stepIndex={1} onEdit={editHandler} open={openSections[2]} onToggle={toggleSection(2)}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <ReadOnlyField label="Monthly Volume" value={`$${Number(pp.monthlyVolume).toLocaleString()}`} />
