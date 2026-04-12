@@ -277,10 +277,11 @@ const ApplicationsPage = () => {
   const renderModalContent = () => {
     if (!selected) return null;
     const d = editingSection ? editData! : selected.data;
-    const pq = d.preQualification;
-    const bp = d.businessProfile;
-    const pp = d.processingProfile;
-    const bk = d.banking;
+    const pq = d.preQualification || {} as any;
+    const bp = d.businessProfile || {} as any;
+    const pp = d.processingProfile || {} as any;
+    const bk = d.banking || {} as any;
+    const docs = d.documents || {} as any;
     const isEditing = (section: string) => editingSection === section;
 
     return (
