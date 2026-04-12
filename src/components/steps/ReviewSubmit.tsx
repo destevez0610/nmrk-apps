@@ -388,7 +388,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
           <div className="border-t border-border/40" />
 
           {/* Section 4: Banking & Settlement */}
-          <CollapsibleSection title="Banking & Settlement" subtitle="Where funds will be deposited" sectionNumber={4} stepIndex={3} onEdit={editHandler}>
+          <CollapsibleSection title="Banking & Settlement" subtitle="Where funds will be deposited" sectionNumber={4} stepIndex={3} onEdit={editHandler} open={openSections[4]} onToggle={toggleSection(4)}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ReadOnlyField label="Bank Name" value={bk.bankName} />
@@ -412,7 +412,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
           <div className="border-t border-border/40" />
 
           {/* Section 5: Documents */}
-          <CollapsibleSection title="Document Upload" subtitle="Supporting documentation for underwriting" sectionNumber={5} stepIndex={4} onEdit={editHandler}>
+          <CollapsibleSection title="Document Upload" subtitle="Supporting documentation for underwriting" sectionNumber={5} stepIndex={4} onEdit={editHandler} open={openSections[5]} onToggle={toggleSection(5)}>
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-3">Driver's License / Government ID</h4>
