@@ -73,15 +73,21 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs text-muted-foreground">Card-Present %</label>
-            <input type="number" className="field-input mt-1" min={0} max={100}
-              value={pp.cardPresentPercent}
-              onChange={(e) => handleCardSplit('cardPresentPercent', Number(e.target.value))} />
+            <input type="text" inputMode="numeric" className="field-input mt-1"
+              value={pp.cardPresentPercent || ''}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '');
+                handleCardSplit('cardPresentPercent', val === '' ? 0 : Number(val));
+              }} />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Card-Not-Present %</label>
-            <input type="number" className="field-input mt-1" min={0} max={100}
-              value={pp.cardNotPresentPercent}
-              onChange={(e) => handleCardSplit('cardNotPresentPercent', Number(e.target.value))} />
+            <input type="text" inputMode="numeric" className="field-input mt-1"
+              value={pp.cardNotPresentPercent || ''}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '');
+                handleCardSplit('cardNotPresentPercent', val === '' ? 0 : Number(val));
+              }} />
           </div>
         </div>
         {errors.split && <p className="field-error">{errors.split}</p>}
@@ -99,7 +105,7 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
 
       {pp.cardNotPresentPercent > 50 && (
         <div>
-          <label className="field-label">Refund Policy URL *</label>
+          <label className="field-label">Refund Policy URL * <span className="text-xs font-normal text-muted-foreground">(Required when CNP &gt; 50%)</span></label>
           <input className="field-input" placeholder="https://yoursite.com/refund-policy"
             value={pp.refundPolicyUrl}
             onChange={(e) => update({ refundPolicyUrl: e.target.value })} />
@@ -114,18 +120,18 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-xs text-muted-foreground">E-Commerce %</label>
-              <input type="number" className="field-input mt-1" value={pp.ecommercePercent}
-                onChange={(e) => update({ ecommercePercent: Number(e.target.value) })} />
+              <input type="text" inputMode="numeric" className="field-input mt-1" value={pp.ecommercePercent || ''}
+                onChange={(e) => { const v = e.target.value.replace(/\D/g, ''); update({ ecommercePercent: v === '' ? 0 : Number(v) }); }} />
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Mail Order %</label>
-              <input type="number" className="field-input mt-1" value={pp.mailOrderPercent}
-                onChange={(e) => update({ mailOrderPercent: Number(e.target.value) })} />
+              <input type="text" inputMode="numeric" className="field-input mt-1" value={pp.mailOrderPercent || ''}
+                onChange={(e) => { const v = e.target.value.replace(/\D/g, ''); update({ mailOrderPercent: v === '' ? 0 : Number(v) }); }} />
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Phone Order %</label>
-              <input type="number" className="field-input mt-1" value={pp.phoneOrderPercent}
-                onChange={(e) => update({ phoneOrderPercent: Number(e.target.value) })} />
+              <input type="text" inputMode="numeric" className="field-input mt-1" value={pp.phoneOrderPercent || ''}
+                onChange={(e) => { const v = e.target.value.replace(/\D/g, ''); update({ phoneOrderPercent: v === '' ? 0 : Number(v) }); }} />
             </div>
           </div>
         </div>
