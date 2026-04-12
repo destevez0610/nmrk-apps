@@ -290,6 +290,27 @@ const ApplicationsPage = () => {
       { label: 'ACH High Ticket', path: 'processingProfile.achHighTicket' },
       { label: 'ACH Current Provider', path: 'processingProfile.achCurrentProvider' },
     ],
+    ownership: (() => {
+      const fields: { label: string; path: string }[] = [];
+      const count = selected?.data?.owners?.length || 0;
+      for (let i = 0; i < count; i++) {
+        fields.push(
+          { label: `Owner ${i + 1} First Name`, path: `owners.${i}.firstName` },
+          { label: `Owner ${i + 1} Last Name`, path: `owners.${i}.lastName` },
+          { label: `Owner ${i + 1} Title`, path: `owners.${i}.title` },
+          { label: `Owner ${i + 1} Ownership %`, path: `owners.${i}.ownershipPercent` },
+          { label: `Owner ${i + 1} DOB`, path: `owners.${i}.dob` },
+          { label: `Owner ${i + 1} SSN`, path: `owners.${i}.ssn` },
+          { label: `Owner ${i + 1} Email`, path: `owners.${i}.email` },
+          { label: `Owner ${i + 1} Phone`, path: `owners.${i}.phone` },
+          { label: `Owner ${i + 1} Street Address`, path: `owners.${i}.streetAddress` },
+          { label: `Owner ${i + 1} City`, path: `owners.${i}.city` },
+          { label: `Owner ${i + 1} State`, path: `owners.${i}.state` },
+          { label: `Owner ${i + 1} ZIP`, path: `owners.${i}.zip` },
+        );
+      }
+      return fields;
+    })(),
     banking: [
       { label: 'Bank Name', path: 'banking.bankName' },
       { label: 'Account Type', path: 'banking.accountType' },
