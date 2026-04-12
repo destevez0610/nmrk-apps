@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PUSH_PROVIDERS, PushProviderId, PushRecord, StoredApplication } from '@/types/application';
-import { pushApplication } from '@/lib/activityStore';
-import { Loader2, Send, CheckCircle2, XCircle, ArrowRight, Check } from 'lucide-react';
+import { pushApplication, cancelPush } from '@/lib/activityStore';
+import { Loader2, Send, CheckCircle2, XCircle, ArrowRight, Check, Ban } from 'lucide-react';
 import {
   AlertDialog, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -14,7 +14,7 @@ interface Props {
   onPushComplete: () => void;
 }
 
-type Phase = 'select' | 'pushing' | 'result';
+type Phase = 'select' | 'pushing' | 'result' | 'cancel-confirm';
 
 interface PushResult {
   provider: PushProviderId;
@@ -28,6 +28,14 @@ const PushAppModal = ({ open, onClose, app, onPushComplete }: Props) => {
   const [pushResults, setPushResults] = useState<PushResult[]>([]);
   const [pushingIndex, setPushingIndex] = useState(0);
   const [pushingTotal, setPushingTotal] = useState(0);
+  const [cancelTarget, setCancelTarget] = useState<PushRecord | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+
+  // Build a map of latest push status per provider
+  const latestByProvider = new Map<PushProviderId, PushRecord>();
+  if (app.pushHistory) {
+    app.pushHistory.forEach((r) => latestByProvider.set(r.provider, r));
+  }
 
   const reset = () => {
     setSelectedProviders(new Set());
@@ -35,6 +43,8 @@ const PushAppModal = ({ open, onClose, app, onPushComplete }: Props) => {
     setPushResults([]);
     setPushingIndex(0);
     setPushingTotal(0);
+    setCancelTarget(null);
+    setCancelling(false);
   };
 
   const handleClose = () => {
@@ -86,6 +96,16 @@ const PushAppModal = ({ open, onClose, app, onPushComplete }: Props) => {
     onPushComplete();
   };
 
+  const handleCancelPush = async () => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    await cancelPush(app.id, cancelTarget.provider, PUSH_PROVIDERS.find((p) => p.id === cancelTarget.provider)?.name || cancelTarget.provider);
+    setCancelling(false);
+    setCancelTarget(null);
+    setPhase('select');
+    onPushComplete();
+  };
+
   const successCount = pushResults.filter((r) => r.record.status !== 'error').length;
   const failCount = pushResults.filter((r) => r.record.status === 'error').length;
 
@@ -97,11 +117,13 @@ const PushAppModal = ({ open, onClose, app, onPushComplete }: Props) => {
             {phase === 'select' && 'Push Application'}
             {phase === 'pushing' && `Sending (${pushingIndex}/${pushingTotal})...`}
             {phase === 'result' && (failCount === 0 ? 'All Sent Successfully' : `${successCount} Sent, ${failCount} Failed`)}
+            {phase === 'cancel-confirm' && 'Cancel Submission?'}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {phase === 'select' && 'Select one or more providers to send this application to for boarding.'}
             {phase === 'pushing' && 'Please wait while we submit the application to selected providers.'}
             {phase === 'result' && 'See the results for each provider below.'}
+            {phase === 'cancel-confirm' && `This will withdraw the application from ${PUSH_PROVIDERS.find((p) => p.id === cancelTarget?.provider)?.name}. The provider will be notified to stop processing.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -109,26 +131,50 @@ const PushAppModal = ({ open, onClose, app, onPushComplete }: Props) => {
           <div className="space-y-2 py-2">
             {PUSH_PROVIDERS.map((p) => {
               const isSelected = selectedProviders.has(p.id);
+              const latest = latestByProvider.get(p.id);
+              const isPending = latest?.status === 'pending';
+              const isAccepted = latest?.status === 'accepted';
+              const isDisabled = isPending || isAccepted;
+
               return (
                 <button
                   key={p.id}
                   type="button"
-                  onClick={() => toggleProvider(p.id)}
+                  onClick={() => !isDisabled && toggleProvider(p.id)}
+                  disabled={isDisabled}
                   className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
-                    isSelected
+                    isDisabled
+                      ? 'border-border bg-secondary/30 opacity-60 cursor-not-allowed'
+                      : isSelected
                       ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
                       : 'border-border hover:border-primary/30 hover:bg-secondary/50'
                   }`}
                 >
                   <div>
                     <p className="text-sm font-semibold text-foreground">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{p.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isDisabled ? (
+                        <span className={`font-medium ${isPending ? 'text-warning' : 'text-accent'}`}>
+                          {isPending ? 'Pending — awaiting response' : 'Accepted'}
+                        </span>
+                      ) : (
+                        p.description
+                      )}
+                    </p>
                   </div>
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
-                    isSelected ? 'bg-primary border-primary' : 'border-muted-foreground/30'
-                  }`}>
-                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                  </div>
+                  {isDisabled ? (
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                      isPending ? 'bg-warning/10 text-warning' : 'bg-accent/10 text-accent'
+                    }`}>
+                      {latest?.status}
+                    </span>
+                  ) : (
+                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
+                      isSelected ? 'bg-primary border-primary' : 'border-muted-foreground/30'
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
+                  )}
                 </button>
               );
             })}
@@ -137,8 +183,9 @@ const PushAppModal = ({ open, onClose, app, onPushComplete }: Props) => {
               <div className="mt-3 pt-3 border-t border-border">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Previous submissions</p>
                 <div className="space-y-1.5">
-                  {app.pushHistory.slice(-3).reverse().map((r) => {
+                  {app.pushHistory.slice(-5).reverse().map((r) => {
                     const prov = PUSH_PROVIDERS.find((p) => p.id === r.provider);
+                    const canCancel = r.status === 'pending';
                     return (
                       <div key={r.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-secondary/50">
                         <span className="text-foreground font-medium">{prov?.name}</span>
@@ -146,10 +193,21 @@ const PushAppModal = ({ open, onClose, app, onPushComplete }: Props) => {
                           <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
                             r.status === 'pending' ? 'bg-warning/10 text-warning' :
                             r.status === 'accepted' ? 'bg-accent/10 text-accent' :
+                            r.status === 'cancelled' ? 'bg-muted text-muted-foreground' :
                             'bg-destructive/10 text-destructive'
                           }`}>
                             {r.status}
                           </span>
+                          {canCancel && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setCancelTarget(r); setPhase('cancel-confirm'); }}
+                              className="inline-flex items-center gap-0.5 text-[10px] font-medium text-destructive hover:text-destructive/80 bg-destructive/5 hover:bg-destructive/10 px-1.5 py-0.5 rounded transition-colors"
+                              title="Cancel this submission"
+                            >
+                              <Ban className="w-2.5 h-2.5" />
+                              Cancel
+                            </button>
+                          )}
                           <span className="text-muted-foreground">{new Date(r.pushedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
@@ -197,6 +255,20 @@ const PushAppModal = ({ open, onClose, app, onPushComplete }: Props) => {
           </div>
         )}
 
+        {phase === 'cancel-confirm' && (
+          <div className="flex flex-col items-center py-6">
+            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-3">
+              <Ban className="w-6 h-6 text-destructive" />
+            </div>
+            <p className="text-sm text-foreground font-medium text-center">
+              Withdraw from {PUSH_PROVIDERS.find((p) => p.id === cancelTarget?.provider)?.name}?
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 text-center max-w-xs">
+              This action will mark the submission as cancelled and notify the provider to stop processing this application.
+            </p>
+          </div>
+        )}
+
         <AlertDialogFooter>
           {phase === 'select' && (
             <>
@@ -221,6 +293,21 @@ const PushAppModal = ({ open, onClose, app, onPushComplete }: Props) => {
               )}
               <button onClick={handleClose} className="btn-primary">
                 Done
+              </button>
+            </>
+          )}
+          {phase === 'cancel-confirm' && (
+            <>
+              <button onClick={() => { setCancelTarget(null); setPhase('select'); }} className="btn-secondary">
+                Go Back
+              </button>
+              <button
+                onClick={handleCancelPush}
+                disabled={cancelling}
+                className="btn-primary bg-destructive hover:bg-destructive/90 text-destructive-foreground flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {cancelling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ban className="w-3.5 h-3.5" />}
+                {cancelling ? 'Cancelling...' : 'Confirm Cancel'}
               </button>
             </>
           )}
