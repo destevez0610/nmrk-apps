@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Search, X, Pencil, Check, ArrowLeft,
   Building2, Users, CreditCard, Landmark, FileText as FileTextIcon,
-  ArrowUpDown, Filter, Save, Send, History, RotateCw,
+  ArrowUpDown, Filter, Save, Send, History, RotateCw, Undo2,
 } from 'lucide-react';
 import DocThumbnail from '@/components/DocThumbnail';
 import ReadOnlyField from '@/components/ReadOnlyField';
