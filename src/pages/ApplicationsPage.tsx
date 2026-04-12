@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, X, Pencil, Check, ArrowLeft,
-  Building2, Users, CreditCard, Landmark, FileText,
+  Building2, Users, CreditCard, Landmark, FileText as FileTextIcon,
   ArrowUpDown, Filter, Save, Send, History,
 } from 'lucide-react';
 import {
