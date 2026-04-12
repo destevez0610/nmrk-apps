@@ -38,6 +38,10 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
     if (pp.cardNotPresentPercent > 50 && !pp.refundPolicyUrl.trim()) {
       e.refundPolicyUrl = 'Required when Card-Not-Present > 50%';
     }
+    if (pp.cardNotPresentPercent > 0) {
+      const cnpTotal = (pp.ecommercePercent || 0) + (pp.mailOrderPercent || 0) + (pp.phoneOrderPercent || 0);
+      if (cnpTotal !== 100) e.cnpBreakdown = 'E-Commerce + Mail Order + Phone Order must equal 100%';
+    }
     setErrors(e);
     if (Object.keys(e).length > 0) scrollToFirstError();
     return Object.keys(e).length === 0;
@@ -136,7 +140,7 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
                 onChange={(e) => { const v = e.target.value.replace(/\D/g, ''); update({ phoneOrderPercent: v === '' ? 0 : Number(v) }); }} />
             </div>
           </div>
-        </div>
+          {errors.cnpBreakdown && <p className="field-error">{errors.cnpBreakdown}</p>}
       )}
 
       <div className="flex justify-between pt-4">
