@@ -5,6 +5,7 @@ import { formatPhone } from '@/lib/formatPhone';
 import { formatSsn } from '@/lib/formatSsn';
 import { formatZip } from '@/lib/formatZip';
 import { scrollToFirstError } from '@/lib/scrollToError';
+import PrefilledBadge from '@/components/PrefilledBadge';
 import { Plus, Trash2, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -127,17 +128,17 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="field-label">First Name *</label>
+              <label className="field-label">First Name *{pf(idx, 'firstName') && <PrefilledBadge />}</label>
               <input className={`field-input ${pf(idx, 'firstName')}`} value={owner.firstName} onChange={(e) => { clearPf(idx, 'firstName'); updateOwner(owner.id, { firstName: e.target.value }); }} />
               {errors[`${idx}.firstName`] && <p className="field-error">{errors[`${idx}.firstName`]}</p>}
             </div>
             <div>
-              <label className="field-label">Last Name *</label>
+              <label className="field-label">Last Name *{pf(idx, 'lastName') && <PrefilledBadge />}</label>
               <input className={`field-input ${pf(idx, 'lastName')}`} value={owner.lastName} onChange={(e) => { clearPf(idx, 'lastName'); updateOwner(owner.id, { lastName: e.target.value }); }} />
               {errors[`${idx}.lastName`] && <p className="field-error">{errors[`${idx}.lastName`]}</p>}
             </div>
             <div>
-              <label className="field-label">Title *</label>
+              <label className="field-label">Title *{pf(idx, 'title') && <PrefilledBadge />}</label>
               <select className={`field-input ${pf(idx, 'title')}`} value={TITLE_OPTIONS.includes(owner.title) ? owner.title : otherTitleIds.has(owner.id) || owner.title ? 'Other' : ''} onChange={(e) => {
                 if (e.target.value === 'Other') {
                   setOtherTitleIds((prev) => new Set(prev).add(owner.id));
@@ -197,11 +198,11 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="field-label">Email</label>
+              <label className="field-label">Email{pf(idx, 'email') && <PrefilledBadge />}</label>
               <input type="email" className={`field-input ${pf(idx, 'email')}`} value={owner.email} onChange={(e) => { clearPf(idx, 'email'); updateOwner(owner.id, { email: e.target.value }); }} />
             </div>
             <div>
-              <label className="field-label">Phone</label>
+              <label className="field-label">Phone{pf(idx, 'phone') && <PrefilledBadge />}</label>
               <input className={`field-input ${pf(idx, 'phone')}`} placeholder="(555) 123-4567" value={owner.phone} onChange={(e) => { clearPf(idx, 'phone'); updateOwner(owner.id, { phone: formatPhone(e.target.value) }); }} />
             </div>
           </div>

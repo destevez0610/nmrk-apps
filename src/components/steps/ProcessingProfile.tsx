@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import MoneyInput from '@/components/MoneyInput';
 import { scrollToFirstError } from '@/lib/scrollToError';
+import PrefilledBadge from '@/components/PrefilledBadge';
 
 interface Props {
   onNext: () => void;
@@ -69,12 +70,12 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="field-label">Monthly Volume *</label>
+          <label className="field-label">Monthly Volume *{pf('monthlyVolume') && <PrefilledBadge />}</label>
           <MoneyInput value={pp.monthlyVolume} onChange={(v) => { clearPf('monthlyVolume'); update({ monthlyVolume: v }); }} placeholder="25,000" className={pf('monthlyVolume')} />
           {errors.monthlyVolume && <p className="field-error">{errors.monthlyVolume}</p>}
         </div>
         <div>
-          <label className="field-label">Average Ticket *</label>
+          <label className="field-label">Average Ticket *{pf('averageTicket') && <PrefilledBadge />}</label>
           <MoneyInput value={pp.averageTicket} onChange={(v) => { clearPf('averageTicket'); update({ averageTicket: v }); }} placeholder="150" className={pf('averageTicket')} />
           {errors.averageTicket && <p className="field-error">{errors.averageTicket}</p>}
         </div>
