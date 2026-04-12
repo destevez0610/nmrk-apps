@@ -7,6 +7,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import SignaturePad from '@/components/SignaturePad';
+import { format } from 'date-fns';
 
 interface Props {
   onPrev: () => void;
@@ -14,7 +15,6 @@ interface Props {
   onSaveAndGoToStep?: (step: number) => void;
 }
 
-/** Truncate long filenames */
 const truncateName = (name: string, maxLen = 24): string => {
   if (name.length <= maxLen) return name;
   const ext = name.includes('.') ? '.' + name.split('.').pop() : '';
@@ -56,41 +56,57 @@ const DocThumbnail = ({ file, frosted = false }: { file: File; frosted?: boolean
   );
 };
 
-const Field = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="grid grid-cols-[140px_1fr] py-1.5 border-b border-dashed border-border/60 last:border-0">
-    <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{label}</span>
-    <span className="text-xs text-foreground">{value || '—'}</span>
+/** Read-only field styled like a filled form input */
+const ReadOnlyField = ({ label, value, optional }: { label: string; value: string | number; optional?: boolean }) => (
+  <div>
+    <label className="field-label">
+      {label}
+      {optional && <span className="text-xs font-normal text-muted-foreground ml-1">(Optional)</span>}
+    </label>
+    <div className="field-input bg-secondary/50 cursor-default text-foreground">
+      {value || '—'}
+    </div>
   </div>
 );
 
 const SectionHeader = ({
   title,
+  subtitle,
   sectionNumber,
   stepIndex,
   onEdit,
+  rightContent,
 }: {
   title: string;
+  subtitle: string;
   sectionNumber: number;
   stepIndex: number;
   onEdit?: (stepIndex: number) => void;
+  rightContent?: React.ReactNode;
 }) => (
-  <div className="flex items-center justify-between mb-3 pb-2 border-b-2 border-primary/30">
-    <div className="flex items-center gap-2.5">
-      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
+  <div className="flex items-start justify-between mb-4">
+    <div className="flex items-start gap-3">
+      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold mt-0.5">
         {sectionNumber}
       </span>
-      <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">{title}</h3>
+      <div>
+        <h3 className="text-base font-bold text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+      </div>
     </div>
-    {onEdit && (
-      <button
-        type="button"
-        onClick={() => onEdit(stepIndex)}
-        className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors font-medium"
-      >
-        <Pencil className="w-3 h-3" />
-        Edit
-      </button>
-    )}
+    <div className="flex items-center gap-3">
+      {rightContent}
+      {onEdit && (
+        <button
+          type="button"
+          onClick={() => onEdit(stepIndex)}
+          className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors font-medium px-2.5 py-1.5 rounded-lg bg-primary/5 hover:bg-primary/10"
+        >
+          <Pencil className="w-3 h-3" />
+          Edit
+        </button>
+      )}
+    </div>
   </div>
 );
 
@@ -155,12 +171,15 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
   }
 
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const isSoleProp = bp.businessStructure === 'Sole Proprietorship';
+  const editHandler = onGoToStep ? handleEditClick : undefined;
+  const totalOwnership = data.owners.reduce((sum, o) => sum + (Number(o.ownershipPercent) || 0), 0);
 
   return (
     <div className="space-y-4">
       {/* Document container */}
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-        {/* Document header — like a letterhead */}
+        {/* Document header */}
         <div className="bg-primary/[0.04] border-b border-border px-6 py-5">
           <div className="flex items-start justify-between">
             <div>
@@ -184,63 +203,150 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
           </div>
         </div>
 
-        {/* Document body — sectioned like a formal application */}
-        <div className="px-6 py-5 space-y-6">
+        {/* Document body */}
+        <div className="px-6 py-6 space-y-8">
 
-          {/* Section 1: Business Profile */}
+          {/* ─── Section 1: Business Profile ─── */}
           <section>
-            <SectionHeader title="Business Profile" sectionNumber={1} stepIndex={0} onEdit={onGoToStep ? handleEditClick : undefined} />
-            <div className="pl-8">
-              <Field label="Legal Name" value={bp.legalName} />
-              <Field label="DBA" value={bp.dba} />
-              <Field label="Structure" value={bp.businessStructure} />
-              <Field label="Industry" value={bp.industryType} />
-              <Field label="Address" value={`${bp.streetAddress}, ${bp.city}, ${bp.state} ${bp.zip}`} />
-              <Field label="Phone" value={bp.phoneNumber} />
-              <Field label="Website" value={bp.websiteUrl} />
-            </div>
-          </section>
-
-          <div className="border-t border-border/40" />
-
-          {/* Section 2: Processing Profile */}
-          <section>
-            <SectionHeader title="Processing Profile" sectionNumber={2} stepIndex={1} onEdit={onGoToStep ? handleEditClick : undefined} />
-            <div className="pl-8">
-              <Field label="Monthly Volume" value={`$${Number(pp.monthlyVolume).toLocaleString()}`} />
-              <Field label="Average Ticket" value={`$${Number(pp.averageTicket).toLocaleString()}`} />
-              <Field label="High Ticket" value={`$${Number(pp.highTicket).toLocaleString()}`} />
-              <Field label="Card Present" value={`${pp.cardPresentPercent}%`} />
-              <Field label="Card Not Present" value={`${pp.cardNotPresentPercent}%`} />
-              {pp.cardNotPresentPercent > 0 && (
-                <>
-                  <Field label="E-Commerce" value={`${pp.ecommercePercent}%`} />
-                  <Field label="Mail Order" value={`${pp.mailOrderPercent}%`} />
-                  <Field label="Phone Order" value={`${pp.phoneOrderPercent}%`} />
-                </>
+            <SectionHeader title="Business Profile" subtitle="Entity and contact information" sectionNumber={1} stepIndex={0} onEdit={editHandler} />
+            <div className="space-y-4 pl-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ReadOnlyField label="Legal Business Name" value={bp.legalName} />
+                <ReadOnlyField label="DBA (Doing Business As)" value={bp.dba} optional />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ReadOnlyField label="Business Structure" value={bp.businessStructure} />
+                {isSoleProp ? (
+                  <ReadOnlyField label="Social Security Number" value={bp.ssn ? '•••-••-' + bp.ssn.replace(/\D/g, '').slice(-4) : ''} />
+                ) : (
+                  <ReadOnlyField label="EIN (Employer ID)" value={bp.ein} />
+                )}
+              </div>
+              <ReadOnlyField label="Industry Type" value={bp.industryType} />
+              <div>
+                <label className="field-label">Physical Business Address</label>
+                <div className="field-input bg-secondary/50 cursor-default text-foreground mb-3">
+                  {bp.streetAddress || '—'}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="field-input bg-secondary/50 cursor-default text-foreground">{bp.city || '—'}</div>
+                  <div className="field-input bg-secondary/50 cursor-default text-foreground">{bp.state || '—'}</div>
+                  <div className="field-input bg-secondary/50 cursor-default text-foreground">{bp.zip || '—'}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ReadOnlyField label="Business Phone" value={bp.phoneNumber} />
+                <ReadOnlyField label="Website URL" value={bp.websiteUrl} optional />
+              </div>
+              {bp.businessStartDate && (
+                <ReadOnlyField label="Business Start Date" value={format(new Date(bp.businessStartDate + 'T00:00:00'), 'MM/dd/yyyy')} optional />
               )}
-              {pp.refundPolicyUrl && <Field label="Refund Policy" value={pp.refundPolicyUrl} />}
             </div>
           </section>
 
           <div className="border-t border-border/40" />
 
-          {/* Section 3: Ownership & Principals */}
+          {/* ─── Section 2: Processing Profile ─── */}
           <section>
-            <SectionHeader title="Ownership & Principals" sectionNumber={3} stepIndex={2} onEdit={onGoToStep ? handleEditClick : undefined} />
-            <div className="pl-8 space-y-4">
+            <SectionHeader title="Processing Profile" subtitle="Volume and transaction details" sectionNumber={2} stepIndex={1} onEdit={editHandler} />
+            <div className="space-y-4 pl-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <ReadOnlyField label="Monthly Volume" value={`$${Number(pp.monthlyVolume).toLocaleString()}`} />
+                <ReadOnlyField label="Average Ticket" value={`$${Number(pp.averageTicket).toLocaleString()}`} />
+                <ReadOnlyField label="High Ticket" value={`$${Number(pp.highTicket).toLocaleString()}`} />
+              </div>
+              <div>
+                <label className="field-label">Transaction Split</label>
+                <div className="grid grid-cols-2 gap-4 mt-1">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Card-Present %</label>
+                    <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.cardPresentPercent}%</div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Card-Not-Present %</label>
+                    <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.cardNotPresentPercent}%</div>
+                  </div>
+                </div>
+                {/* Visual bar */}
+                <div className="mt-3 h-2 rounded-full bg-secondary overflow-hidden flex">
+                  <div className="bg-primary transition-all duration-300" style={{ width: `${pp.cardPresentPercent}%` }} />
+                  <div className="bg-accent transition-all duration-300" style={{ width: `${pp.cardNotPresentPercent}%` }} />
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                  <span>Present: {pp.cardPresentPercent}%</span>
+                  <span>Not-Present: {pp.cardNotPresentPercent}%</span>
+                </div>
+              </div>
+              {pp.cardNotPresentPercent > 0 && (
+                <div>
+                  <label className="field-label">Card-Not-Present Breakdown</label>
+                  <div className="grid grid-cols-3 gap-3 mt-1">
+                    <div>
+                      <label className="text-xs text-muted-foreground">E-Commerce %</label>
+                      <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.ecommercePercent}%</div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Mail Order %</label>
+                      <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.mailOrderPercent}%</div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Phone Order %</label>
+                      <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.phoneOrderPercent}%</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {pp.refundPolicyUrl && (
+                <ReadOnlyField label="Refund Policy URL" value={pp.refundPolicyUrl} />
+              )}
+            </div>
+          </section>
+
+          <div className="border-t border-border/40" />
+
+          {/* ─── Section 3: Ownership & Principals ─── */}
+          <section>
+            <SectionHeader
+              title="Ownership & Principals"
+              subtitle="All owners with ≥25% stake"
+              sectionNumber={3}
+              stepIndex={2}
+              onEdit={editHandler}
+              rightContent={
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${totalOwnership === 100 ? 'bg-accent/10 text-accent' : 'bg-warning/10 text-warning'}`}>
+                  {totalOwnership}% / 100%
+                </span>
+              }
+            />
+            <div className="space-y-6 pl-10">
               {data.owners.map((o, i) => (
-                <div key={o.id} className={i > 0 ? 'pt-3 border-t border-dashed border-border/50' : ''}>
-                  <p className="text-[11px] font-semibold text-primary mb-1.5 uppercase tracking-wider">
-                    Principal {i + 1}
-                  </p>
-                  <Field label="Name" value={`${o.firstName} ${o.lastName}`} />
-                  <Field label="Title" value={o.title} />
-                  <Field label="Ownership" value={`${o.ownershipPercent}%`} />
-                  <Field label="Date of Birth" value={o.dob} />
-                  <Field label="Email" value={o.email} />
-                  <Field label="Phone" value={o.phone} />
-                  <Field label="Address" value={`${o.streetAddress}, ${o.city}, ${o.state} ${o.zip}`} />
+                <div key={o.id} className={`space-y-4 ${i > 0 ? 'pt-4 border-t border-dashed border-border/50' : ''}`}>
+                  <h4 className="text-sm font-semibold text-foreground">Owner {i + 1}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <ReadOnlyField label="First Name" value={o.firstName} />
+                    <ReadOnlyField label="Last Name" value={o.lastName} />
+                    <ReadOnlyField label="Title" value={o.title} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <ReadOnlyField label="Date of Birth" value={o.dob ? format(new Date(o.dob + 'T00:00:00'), 'MM/dd/yyyy') : ''} />
+                    <ReadOnlyField label="SSN" value={o.ssn ? '•••-••-' + o.ssn.replace(/\D/g, '').slice(-4) : ''} />
+                    <ReadOnlyField label="Ownership %" value={`${o.ownershipPercent}%`} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <ReadOnlyField label="Email" value={o.email} />
+                    <ReadOnlyField label="Phone" value={o.phone} />
+                  </div>
+                  <div>
+                    <label className="field-label">Home Address</label>
+                    <div className="field-input bg-secondary/50 cursor-default text-foreground mb-3">
+                      {o.streetAddress || '—'}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div className="field-input bg-secondary/50 cursor-default text-foreground">{o.city || '—'}</div>
+                      <div className="field-input bg-secondary/50 cursor-default text-foreground">{o.state || '—'}</div>
+                      <div className="field-input bg-secondary/50 cursor-default text-foreground">{o.zip || '—'}</div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -248,18 +354,22 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
 
           <div className="border-t border-border/40" />
 
-          {/* Section 4: Banking & Settlement */}
+          {/* ─── Section 4: Banking & Settlement ─── */}
           <section>
-            <SectionHeader title="Banking & Settlement" sectionNumber={4} stepIndex={3} onEdit={onGoToStep ? handleEditClick : undefined} />
-            <div className="pl-8">
-              <Field label="Bank Name" value={bk.bankName} />
-              <Field label="Account Type" value={bk.accountType} />
-              <Field label="Routing #" value={bk.routingNumber} />
-              <Field label="Account #" value={`****${bk.accountNumber.slice(-4)}`} />
+            <SectionHeader title="Banking & Settlement" subtitle="Where funds will be deposited" sectionNumber={4} stepIndex={3} onEdit={editHandler} />
+            <div className="space-y-4 pl-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ReadOnlyField label="Bank Name" value={bk.bankName} />
+                <ReadOnlyField label="Account Type" value={bk.accountType} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ReadOnlyField label="Routing Number" value={bk.routingNumber} />
+                <ReadOnlyField label="Account Number" value={bk.accountNumber ? `****${bk.accountNumber.slice(-4)}` : '—'} />
+              </div>
               {bk.voidedCheckFile && (
-                <div className="mt-3">
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mb-2">Voided Check</p>
-                  <div className="w-28">
+                <div>
+                  <label className="field-label">Voided Check or Bank Letter</label>
+                  <div className="w-32 mt-1">
                     <DocThumbnail file={bk.voidedCheckFile} frosted />
                   </div>
                 </div>
@@ -269,50 +379,69 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
 
           <div className="border-t border-border/40" />
 
-          {/* Section 5: Documents */}
+          {/* ─── Section 5: Documents ─── */}
           <section>
-            <SectionHeader title="Supporting Documents" sectionNumber={5} stepIndex={4} onEdit={onGoToStep ? handleEditClick : undefined} />
-            <div className="pl-8">
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {docs.driversLicenseFront && (
+            <SectionHeader title="Document Upload" subtitle="Supporting documentation for underwriting" sectionNumber={5} stepIndex={4} onEdit={editHandler} />
+            <div className="space-y-4 pl-10">
+              {/* Government ID */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3">Driver's License / Government ID</h4>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">ID Front</p>
-                    <DocThumbnail file={docs.driversLicenseFront} frosted />
+                    <label className="field-label">Front</label>
+                    {docs.driversLicenseFront ? (
+                      <DocThumbnail file={docs.driversLicenseFront} frosted />
+                    ) : (
+                      <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">—</div>
+                    )}
                   </div>
-                )}
-                {docs.driversLicenseBack && (
                   <div>
-                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">ID Back</p>
-                    <DocThumbnail file={docs.driversLicenseBack} frosted />
+                    <label className="field-label">Back</label>
+                    {docs.driversLicenseBack ? (
+                      <DocThumbnail file={docs.driversLicenseBack} frosted />
+                    ) : (
+                      <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">—</div>
+                    )}
                   </div>
-                )}
-                {docs.bankStatements.map((f, i) => (
-                  <div key={i}>
-                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">Statement {i + 1}</p>
-                    <DocThumbnail file={f} />
-                  </div>
-                ))}
+                </div>
               </div>
+              {/* Bank Statements */}
+              {docs.bankStatements.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {docs.bankStatements.map((f, i) => (
+                      <div key={i}>
+                        <label className="field-label">Statement {i + 1}</label>
+                        <DocThumbnail file={f} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
         </div>
 
-        {/* Signature area — inside the document */}
+        {/* Signature area */}
         <div className="border-t border-border px-6 py-5 bg-primary/[0.02]">
-          <div className="flex items-center gap-2.5 mb-3">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
+          <div className="flex items-start gap-3 mb-4">
+            <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold mt-0.5">
               6
             </span>
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Authorization</h3>
+            <div>
+              <h3 className="text-base font-bold text-foreground">Authorization</h3>
+              <p className="text-sm text-muted-foreground mt-0.5">Electronic signature required</p>
+            </div>
           </div>
-          <div className="pl-8">
+          <div className="pl-10">
             <SignaturePad onSign={setSignature} signatureData={signature} />
             {sigError && <p className="field-error mt-1">{sigError}</p>}
           </div>
         </div>
       </div>
 
-      {/* Action buttons outside the "document" */}
+      {/* Action buttons */}
       <div className="flex justify-between pt-2">
         <button onClick={onPrev} className="btn-secondary">Back</button>
         <button onClick={handleSubmit} className="btn-accent">Submit Application</button>
