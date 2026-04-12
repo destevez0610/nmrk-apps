@@ -594,6 +594,20 @@ const ApplicationsPage = () => {
             </div>
           </section>
         )}
+
+        {activeTab === 'activity' && (
+          <section>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                <History className="w-3.5 h-3.5" />
+              </span>
+              <h3 className="text-base font-bold text-foreground">Activity Trail</h3>
+            </div>
+            <div className="pl-10">
+              <ActivityTrail events={getActivityLog(selected!.id)} />
+            </div>
+          </section>
+        )}
       </div>
     );
   };
