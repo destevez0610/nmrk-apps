@@ -60,6 +60,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep }: Props) => {
   const { data, isSubmitted, setIsSubmitted, confirmationId, setConfirmationId, signature, setSignature } = useApplication();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sigError, setSigError] = useState('');
+  const [editTarget, setEditTarget] = useState<number | null>(null);
   const bp = data.businessProfile;
   const pp = data.processingProfile;
   const bk = data.banking;
