@@ -2,21 +2,27 @@ import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
+import SignaturePad from '@/components/SignaturePad';
 
 interface Props {
   onPrev: () => void;
 }
 
 const ReviewSubmit = ({ onPrev }: Props) => {
-  const { data, isSubmitted, setIsSubmitted, confirmationId, setConfirmationId } = useApplication();
+  const { data, isSubmitted, setIsSubmitted, confirmationId, setConfirmationId, signature, setSignature } = useApplication();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sigError, setSigError] = useState('');
   const bp = data.businessProfile;
   const pp = data.processingProfile;
   const bk = data.banking;
 
   const handleSubmit = async () => {
+    if (!signature) {
+      setSigError('Please sign before submitting.');
+      return;
+    }
+    setSigError('');
     setIsSubmitting(true);
-    // Simulate API call
     await new Promise((r) => setTimeout(r, 3000));
     const id = `MAV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     setConfirmationId(id);
@@ -121,6 +127,9 @@ const ReviewSubmit = ({ onPrev }: Props) => {
         <Field label="ID Back" value={data.documents.driversLicenseBack?.name || '—'} />
         <Field label="Bank Statements" value={`${data.documents.bankStatements.length} file(s)`} />
       </Section>
+
+      <SignaturePad onSign={setSignature} signatureData={signature} />
+      {sigError && <p className="field-error">{sigError}</p>}
 
       <div className="flex justify-between pt-4">
         <button onClick={onPrev} className="btn-secondary">Back</button>
