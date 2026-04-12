@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Loader2, Pencil, FileText, Save, Printer, ChevronDown } from 'lucide-react';
+import { CheckCircle2, Loader2, Pencil, FileText, Save, Printer, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -77,7 +77,8 @@ const CollapsibleSection = ({
   onEdit,
   rightContent,
   children,
-  defaultOpen = true,
+  open,
+  onToggle,
 }: {
   title: string;
   subtitle: string;
@@ -86,12 +87,11 @@ const CollapsibleSection = ({
   onEdit?: (stepIndex: number) => void;
   rightContent?: React.ReactNode;
   children: React.ReactNode;
-  defaultOpen?: boolean;
+  open: boolean;
+  onToggle: () => void;
 }) => {
-  const [open, setOpen] = useState(defaultOpen);
-
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
+    <Collapsible open={open} onOpenChange={onToggle}>
       <div className="flex items-start justify-between mb-4">
         <CollapsibleTrigger asChild>
           <button type="button" className="flex items-start gap-3 group text-left">
