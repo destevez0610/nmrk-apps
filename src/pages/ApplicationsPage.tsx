@@ -323,6 +323,11 @@ const ApplicationsPage = () => {
                     <ReadOnlyField label="Stripe Kickoff" value={pq.wasKickedOffStripe === true ? 'Yes' : pq.wasKickedOffStripe === false ? 'No' : '—'} />
                     <ReadOnlyField label="Business Bank Account" value={pq.hasBusinessBankAccount === true ? 'Yes' : pq.hasBusinessBankAccount === false ? 'No' : '—'} />
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <ReadOnlyField label="Has Photo ID" value={pq.hasPhotoId ? 'Yes' : 'No'} />
+                    <ReadOnlyField label="Has Bank Statement" value={pq.hasBankStatement ? 'Yes' : 'No'} />
+                    <ReadOnlyField label="Has SSN/EIN" value={pq.hasSsnEin ? 'Yes' : 'No'} />
+                  </div>
                 </div>
               )}
             </section>
@@ -365,6 +370,7 @@ const ApplicationsPage = () => {
                           <ReadOnlyField label="Title" value={p.title} />
                           <ReadOnlyField label="Ownership %" value={`${p.ownershipPercent}%`} />
                         </div>
+                        <ReadOnlyField label="Best Time to Contact" value={p.bestTimeToContact} optional />
                       </div>
                     )}
                   </div>
@@ -396,6 +402,11 @@ const ApplicationsPage = () => {
                   <EditField label="Structure" path="businessProfile.businessStructure" />
                   <EditField label="Industry" path="businessProfile.industryType" />
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <EditField label="EIN" path="businessProfile.ein" />
+                  <EditField label="SSN" path="businessProfile.ssn" />
+                  <EditField label="Business Start Date" path="businessProfile.businessStartDate" type="date" />
+                </div>
                 <EditField label="Street Address" path="businessProfile.streetAddress" />
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <EditField label="City" path="businessProfile.city" />
@@ -418,6 +429,8 @@ const ApplicationsPage = () => {
                   <ReadOnlyField label="Industry Type" value={bp.industryType} />
                 </div>
                 {bp.ein && <ReadOnlyField label="EIN (Employer ID)" value={bp.ein} />}
+                {bp.ssn && <ReadOnlyField label="SSN" value={`***-**-${bp.ssn.replace(/\D/g, '').slice(-4)}`} />}
+                <ReadOnlyField label="Business Start Date" value={bp.businessStartDate} />
                 <div>
                   <label className="field-label">Physical Business Address</label>
                   <div className="field-input bg-secondary/50 cursor-default text-foreground mb-3">
@@ -583,6 +596,10 @@ const ApplicationsPage = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <EditField label="Ownership %" path={`owners.${i}.ownershipPercent`} type="number" />
+                        <EditField label="DOB" path={`owners.${i}.dob`} type="date" />
+                        <EditField label="SSN" path={`owners.${i}.ssn`} />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <EditField label="Email" path={`owners.${i}.email`} />
                         <EditField label="Phone" path={`owners.${i}.phone`} type="tel" />
                       </div>
@@ -602,6 +619,10 @@ const ApplicationsPage = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <ReadOnlyField label="Ownership %" value={`${o.ownershipPercent}%`} />
+                        <ReadOnlyField label="Date of Birth" value={o.dob} />
+                        <ReadOnlyField label="SSN" value={o.ssn ? `***-**-${o.ssn.replace(/\D/g, '').slice(-4)}` : '—'} />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <ReadOnlyField label="Email" value={o.email} />
                         <ReadOnlyField label="Phone" value={o.phone} />
                       </div>
