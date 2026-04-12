@@ -127,7 +127,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
 
       <div>
         <label className="field-label">Business Start Date</label>
-        <input type="date" className="field-input" value={bp.businessStartDate} onChange={(e) => update({ businessStartDate: e.target.value })} />
+        <input type="date" className="field-input" max={new Date().toISOString().split('T')[0]} value={bp.businessStartDate} onChange={(e) => update({ businessStartDate: e.target.value })} />
       </div>
 
       <div className="flex justify-between pt-4">
