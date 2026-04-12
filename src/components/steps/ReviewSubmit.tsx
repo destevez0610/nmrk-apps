@@ -280,6 +280,23 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
               {pp.refundPolicyUrl && (
                 <ReadOnlyField label="Refund Policy URL" value={pp.refundPolicyUrl} />
               )}
+              {/* ACH */}
+              <div className="border-t border-border/40 pt-4 mt-4">
+                <h4 className="text-sm font-semibold text-foreground mb-3">ACH Processing</h4>
+                <ReadOnlyField label="Accepts ACH Payments" value={pp.acceptsAch ? 'Yes' : 'No'} />
+                {pp.acceptsAch && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <ReadOnlyField label="ACH Monthly Volume" value={pp.achMonthlyVolume ? `$${Number(pp.achMonthlyVolume).toLocaleString()}` : ''} />
+                    <ReadOnlyField label="ACH Average Ticket" value={pp.achAverageTicket ? `$${Number(pp.achAverageTicket).toLocaleString()}` : ''} />
+                    <ReadOnlyField label="ACH High Ticket" value={pp.achHighTicket ? `$${Number(pp.achHighTicket).toLocaleString()}` : ''} />
+                  </div>
+                )}
+                {pp.acceptsAch && pp.achCurrentProvider && (
+                  <div className="mt-3">
+                    <ReadOnlyField label="ACH Current Provider" value={pp.achCurrentProvider} />
+                  </div>
+                )}
+              </div>
             </div>
           </CollapsibleSection>
 
