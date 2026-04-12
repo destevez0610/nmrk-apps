@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Loader2, Pencil, FileText, Save, Printer, ChevronDown } from 'lucide-react';
+import { CheckCircle2, Loader2, Pencil, FileText, Save, Printer, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -77,7 +77,8 @@ const CollapsibleSection = ({
   onEdit,
   rightContent,
   children,
-  defaultOpen = true,
+  open,
+  onToggle,
 }: {
   title: string;
   subtitle: string;
@@ -86,12 +87,11 @@ const CollapsibleSection = ({
   onEdit?: (stepIndex: number) => void;
   rightContent?: React.ReactNode;
   children: React.ReactNode;
-  defaultOpen?: boolean;
+  open: boolean;
+  onToggle: () => void;
 }) => {
-  const [open, setOpen] = useState(defaultOpen);
-
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
+    <Collapsible open={open} onOpenChange={onToggle}>
       <div className="flex items-start justify-between mb-4">
         <CollapsibleTrigger asChild>
           <button type="button" className="flex items-start gap-3 group text-left">
@@ -135,10 +135,18 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sigError, setSigError] = useState('');
   const [editTarget, setEditTarget] = useState<number | null>(null);
+  const [openSections, setOpenSections] = useState<Record<number, boolean>>({ 1: true, 2: true, 3: true, 4: true, 5: true });
   const bp = data.businessProfile;
   const pp = data.processingProfile;
   const bk = data.banking;
   const docs = data.documents;
+
+  const allExpanded = Object.values(openSections).every(Boolean);
+  const toggleAll = useCallback(() => {
+    const newState = !allExpanded;
+    setOpenSections({ 1: newState, 2: newState, 3: newState, 4: newState, 5: newState });
+  }, [allExpanded]);
+  const toggleSection = (n: number) => () => setOpenSections((prev) => ({ ...prev, [n]: !prev[n] }));
 
   const handleSubmit = async () => {
     if (!signature) {
@@ -212,6 +220,14 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
               </div>
               <button
                 type="button"
+                onClick={toggleAll}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-secondary text-muted-foreground hover:text-foreground transition-colors print:hidden"
+              >
+                <ChevronsUpDown className="w-3.5 h-3.5" />
+                {allExpanded ? 'Collapse All' : 'Expand All'}
+              </button>
+              <button
+                type="button"
                 onClick={() => window.print()}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-secondary text-muted-foreground hover:text-foreground transition-colors print:hidden"
               >
@@ -226,7 +242,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
         <div className="px-6 py-6 space-y-8">
 
           {/* Section 1: Business Profile */}
-          <CollapsibleSection title="Business Profile" subtitle="Entity and contact information" sectionNumber={1} stepIndex={0} onEdit={editHandler}>
+          <CollapsibleSection title="Business Profile" subtitle="Entity and contact information" sectionNumber={1} stepIndex={0} onEdit={editHandler} open={openSections[1]} onToggle={toggleSection(1)}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ReadOnlyField label="Legal Business Name" value={bp.legalName} />
@@ -265,7 +281,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
           <div className="border-t border-border/40" />
 
           {/* Section 2: Processing Profile */}
-          <CollapsibleSection title="Processing Profile" subtitle="Volume and transaction details" sectionNumber={2} stepIndex={1} onEdit={editHandler}>
+          <CollapsibleSection title="Processing Profile" subtitle="Volume and transaction details" sectionNumber={2} stepIndex={1} onEdit={editHandler} open={openSections[2]} onToggle={toggleSection(2)}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <ReadOnlyField label="Monthly Volume" value={`$${Number(pp.monthlyVolume).toLocaleString()}`} />
@@ -327,6 +343,8 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
             sectionNumber={3}
             stepIndex={2}
             onEdit={editHandler}
+            open={openSections[3]}
+            onToggle={toggleSection(3)}
             rightContent={
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${totalOwnership === 100 ? 'bg-accent/10 text-accent' : 'bg-warning/10 text-warning'}`}>
                 {totalOwnership}% / 100%
@@ -370,7 +388,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
           <div className="border-t border-border/40" />
 
           {/* Section 4: Banking & Settlement */}
-          <CollapsibleSection title="Banking & Settlement" subtitle="Where funds will be deposited" sectionNumber={4} stepIndex={3} onEdit={editHandler}>
+          <CollapsibleSection title="Banking & Settlement" subtitle="Where funds will be deposited" sectionNumber={4} stepIndex={3} onEdit={editHandler} open={openSections[4]} onToggle={toggleSection(4)}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ReadOnlyField label="Bank Name" value={bk.bankName} />
@@ -394,7 +412,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
           <div className="border-t border-border/40" />
 
           {/* Section 5: Documents */}
-          <CollapsibleSection title="Document Upload" subtitle="Supporting documentation for underwriting" sectionNumber={5} stepIndex={4} onEdit={editHandler}>
+          <CollapsibleSection title="Document Upload" subtitle="Supporting documentation for underwriting" sectionNumber={5} stepIndex={4} onEdit={editHandler} open={openSections[5]} onToggle={toggleSection(5)}>
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-3">Driver's License / Government ID</h4>

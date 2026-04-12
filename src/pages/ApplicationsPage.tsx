@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, X, Pencil, Check, ArrowLeft,
-  Building2, Users, CreditCard, Landmark, FileText,
+  Building2, Users, CreditCard, Landmark, FileText as FileTextIcon,
   ArrowUpDown, Filter, Save, Send, History,
 } from 'lucide-react';
 import {
@@ -35,6 +35,47 @@ type SortField = 'date' | 'company' | 'volume' | 'status';
 type SortDir = 'asc' | 'desc';
 
 /** Read-only field styled like a filled form input */
+const truncateName = (name: string, maxLen = 24): string => {
+  if (name.length <= maxLen) return name;
+  const ext = name.includes('.') ? '.' + name.split('.').pop() : '';
+  const base = name.slice(0, name.length - ext.length);
+  const keep = maxLen - ext.length - 3;
+  return base.slice(0, Math.max(keep, 6)) + '...' + ext;
+};
+
+const isImage = (file: File) => file.type.startsWith('image/');
+
+const DocThumbnail = ({ file, frosted = false }: { file: File; frosted?: boolean }) => {
+  const previewUrl = useMemo(() => {
+    if (isImage(file)) return URL.createObjectURL(file);
+    return null;
+  }, [file]);
+
+  return (
+    <div className="rounded border border-border overflow-hidden bg-secondary w-full">
+      <div className="aspect-[4/3] flex items-center justify-center overflow-hidden relative">
+        {previewUrl ? (
+          <img
+            src={previewUrl}
+            alt={file.name}
+            className={`w-full h-full object-cover ${frosted ? 'blur-[6px] brightness-90' : ''}`}
+          />
+        ) : (
+          <FileTextIcon className="w-8 h-8 text-muted-foreground" />
+        )}
+        {frosted && (
+          <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
+        )}
+      </div>
+      <div className="px-2 py-1 bg-card border-t border-border">
+        <p className="text-[10px] text-muted-foreground truncate" title={file.name}>
+          {truncateName(file.name)}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const ReadOnlyField = ({ label, value, optional }: { label: string; value: string | number | undefined | null; optional?: boolean }) => (
   <div>
     <label className="field-label">
@@ -226,7 +267,7 @@ const ApplicationsPage = () => {
     { id: 'processing', label: 'Processing', icon: CreditCard },
     { id: 'ownership', label: 'Ownership', icon: Users },
     { id: 'banking', label: 'Banking', icon: Landmark },
-    { id: 'documents', label: 'Documents', icon: FileText },
+    { id: 'documents', label: 'Documents', icon: FileTextIcon },
     { id: 'activity', label: 'Activity', icon: History },
   ];
 
@@ -588,9 +629,43 @@ const ApplicationsPage = () => {
           <section>
             <SectionHeader title="Supporting Documents" sectionNumber={1} editing={false} onStartEdit={() => {}} onSave={() => {}} onCancel={() => {}} />
             <div className="space-y-4 pl-10">
-              <ReadOnlyField label="ID Front" value={d.documents.driversLicenseFront ? 'Uploaded' : 'Not uploaded'} />
-              <ReadOnlyField label="ID Back" value={d.documents.driversLicenseBack ? 'Uploaded' : 'Not uploaded'} />
-              <ReadOnlyField label="Bank Statements" value={`${d.documents.bankStatements.length} file(s)`} />
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3">Driver's License / Government ID</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="field-label">Front</label>
+                    {d.documents.driversLicenseFront ? (
+                      <DocThumbnail file={d.documents.driversLicenseFront} frosted />
+                    ) : (
+                      <ReadOnlyField label="" value="Not uploaded" />
+                    )}
+                  </div>
+                  <div>
+                    <label className="field-label">Back</label>
+                    {d.documents.driversLicenseBack ? (
+                      <DocThumbnail file={d.documents.driversLicenseBack} frosted />
+                    ) : (
+                      <ReadOnlyField label="" value="Not uploaded" />
+                    )}
+                  </div>
+                </div>
+              </div>
+              {d.documents.bankStatements.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {d.documents.bankStatements.map((f, i) => (
+                      <div key={i}>
+                        <label className="field-label">Statement {i + 1}</label>
+                        <DocThumbnail file={f} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!d.documents.driversLicenseFront && !d.documents.driversLicenseBack && d.documents.bankStatements.length === 0 && (
+                <p className="text-sm text-muted-foreground">No documents uploaded.</p>
+              )}
             </div>
           </section>
         )}
