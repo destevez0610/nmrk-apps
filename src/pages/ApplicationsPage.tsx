@@ -673,7 +673,7 @@ const ApplicationsPage = () => {
                   <label className="field-label">Voided Check or Bank Letter</label>
                   {bk.voidedCheckFile ? (
                     <div className="w-32 mt-1">
-                      <DocThumbnail file={bk.voidedCheckFile} frosted />
+                      <DocThumbnail file={bk.voidedCheckFile} />
                     </div>
                   ) : (
                     <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">Not uploaded</div>
@@ -694,7 +694,7 @@ const ApplicationsPage = () => {
                   <div>
                     <label className="field-label">Front</label>
                     {d.documents.driversLicenseFront ? (
-                      <DocThumbnail file={d.documents.driversLicenseFront} frosted />
+                      <DocThumbnail file={d.documents.driversLicenseFront} />
                     ) : (
                       <ReadOnlyField label="" value="Not uploaded" />
                     )}
@@ -702,7 +702,7 @@ const ApplicationsPage = () => {
                   <div>
                     <label className="field-label">Back</label>
                     {d.documents.driversLicenseBack ? (
-                      <DocThumbnail file={d.documents.driversLicenseBack} frosted />
+                      <DocThumbnail file={d.documents.driversLicenseBack} />
                     ) : (
                       <ReadOnlyField label="" value="Not uploaded" />
                     )}
