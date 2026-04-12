@@ -72,6 +72,11 @@ const ApplicationContent = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const saveAndGoToStep = (stepIndex: number) => {
+    manualSave();
+    goToStep(stepIndex);
+  };
+
   const goNext = () => {
     setDirection(1);
     const next = currentStep + 1;
