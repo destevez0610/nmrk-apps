@@ -10,9 +10,13 @@ export interface PreQualPrincipal {
 }
 
 export interface PreQualificationData {
+  companyName: string;
   principals: PreQualPrincipal[];
   location: string;
   monthlyVolume: number | '';
+  averageTicket: number | '';
+  currentProvider: string;
+  wasKickedOffStripe: boolean | null;
   hasBusinessBankAccount: boolean | null;
   hasPhotoId: boolean;
   hasBankStatement: boolean;
@@ -86,8 +90,20 @@ export interface MerchantApplication {
   documents: DocumentsData;
 }
 
+/** Stored application record (for the applications page) */
+export interface StoredApplication {
+  id: string;
+  status: 'pre-qual' | 'pre-qual-failed' | 'in-progress' | 'submitted';
+  createdAt: string;
+  updatedAt: string;
+  data: MerchantApplication;
+  confirmationId?: string;
+  failReason?: string;
+}
+
 export const initialApplication: MerchantApplication = {
   preQualification: {
+    companyName: '',
     principals: [
       {
         id: crypto.randomUUID(),
@@ -102,6 +118,9 @@ export const initialApplication: MerchantApplication = {
     ],
     location: '',
     monthlyVolume: '',
+    averageTicket: '',
+    currentProvider: '',
+    wasKickedOffStripe: null,
     hasBusinessBankAccount: null,
     hasPhotoId: false,
     hasBankStatement: false,
@@ -191,5 +210,24 @@ export const INDUSTRY_TYPES = [
   'Construction',
   'Education',
   'Technology',
+  'Other',
+];
+
+export const CURRENT_PROVIDERS = [
+  'Stripe',
+  'Square',
+  'PayPal',
+  'Clover',
+  'Toast',
+  'Shopify Payments',
+  'Authorize.net',
+  'Braintree',
+  'Adyen',
+  'WorldPay',
+  'First Data / Fiserv',
+  'Heartland',
+  'Chase Merchant Services',
+  'Bank of America Merchant Services',
+  'None / New to Processing',
   'Other',
 ];

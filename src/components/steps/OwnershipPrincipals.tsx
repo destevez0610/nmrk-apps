@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { OwnerData, US_STATES, CANADIAN_PROVINCES } from '@/types/application';
+import { formatPhone } from '@/lib/formatPhone';
 import { Plus, Trash2 } from 'lucide-react';
 
 interface Props {
@@ -132,7 +133,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
             </div>
             <div>
               <label className="field-label">Phone</label>
-              <input className="field-input" value={owner.phone} onChange={(e) => updateOwner(owner.id, { phone: e.target.value })} />
+              <input className="field-input" placeholder="(555) 123-4567" value={owner.phone} onChange={(e) => updateOwner(owner.id, { phone: formatPhone(e.target.value) })} />
             </div>
           </div>
 

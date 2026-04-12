@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
-import { PreQualificationData, PreQualPrincipal } from '@/types/application';
+import { PreQualificationData, PreQualPrincipal, CURRENT_PROVIDERS } from '@/types/application';
+import { createApplication } from '@/lib/applicationsStore';
+import { formatPhone } from '@/lib/formatPhone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, AlertTriangle, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 
@@ -85,10 +87,11 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
   const validateStep0 = () => {
     const e: Record<string, string> = {};
     const p = principals[0];
+    if (!pq.companyName.trim()) e['companyName'] = 'Required';
     if (!p.firstName.trim()) e['0.firstName'] = 'Required';
     if (!p.lastName.trim()) e['0.lastName'] = 'Required';
     if (!p.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) e['0.email'] = 'Valid email required';
-    if (!p.phone.trim()) e['0.phone'] = 'Required';
+    if (!p.phone.trim() || p.phone.replace(/\D/g, '').length < 10) e['0.phone'] = 'Valid 10-digit phone required';
     if (!p.title) e['0.title'] = 'Required';
     if (!p.ownershipPercent || Number(p.ownershipPercent) <= 0 || Number(p.ownershipPercent) > 100)
       e['0.ownership'] = 'Enter a valid percentage (1-100)';
@@ -103,7 +106,7 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
       if (!p.firstName.trim()) e[`${i}.firstName`] = 'Required';
       if (!p.lastName.trim()) e[`${i}.lastName`] = 'Required';
       if (!p.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) e[`${i}.email`] = 'Valid email required';
-      if (!p.phone.trim()) e[`${i}.phone`] = 'Required';
+      if (!p.phone.trim() || p.phone.replace(/\D/g, '').length < 10) e[`${i}.phone`] = 'Valid 10-digit phone required';
       if (!p.title) e[`${i}.title`] = 'Required';
       if (!p.ownershipPercent || Number(p.ownershipPercent) <= 0) e[`${i}.ownership`] = 'Required';
     });
@@ -119,16 +122,34 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
     if (!pq.location) e.location = 'Please select a location.';
     if (pq.location === 'International') {
       setNotQualifiedMsg('We currently only support US and Canada-based merchants. You may still be eligible — please reach out to support@noomerik.com for more information.');
+      createApplication(data, 'pre-qual-failed', undefined, 'International location');
       return false;
     }
 
-    if (pq.monthlyVolume === '' || Number(pq.monthlyVolume) < 10000) {
-      setNotQualifiedMsg('Monthly processing volume must be at least $10,000 to proceed through our standard application. However, you may still qualify — please contact support@noomerik.com and we\'ll work with you to find the best solution.');
+    if (!pq.currentProvider) e.currentProvider = 'Please select your current provider.';
+    if (pq.averageTicket === '') e.averageTicket = 'Please enter your average ticket price.';
+
+    // Volume check with Stripe kickoff override
+    const volume = Number(pq.monthlyVolume) || 0;
+    const isStripeKickoff = pq.wasKickedOffStripe === true;
+    if (pq.monthlyVolume === '' || volume <= 0) {
+      e.monthlyVolume = 'Please enter your monthly volume.';
+    } else if (volume < 10000 && !isStripeKickoff) {
+      setNotQualifiedMsg(
+        'Monthly processing volume must be at least $10,000 to proceed through our standard application. ' +
+        'However, you may still qualify — please contact support@noomerik.com and we\'ll work with you to find the best solution.'
+      );
+      createApplication(data, 'pre-qual-failed', undefined, 'Volume below $10k');
       return false;
     }
+    // If kicked off Stripe and volume < $10k, we allow it — the override
 
     if (pq.hasBusinessBankAccount !== true) {
-      setNotQualifiedMsg('A business bank account is typically required for payment processing. If you\'re in the process of setting one up, please reach out to support@noomerik.com and we can discuss your options.');
+      setNotQualifiedMsg(
+        'A business bank account is typically required for payment processing. ' +
+        'If you\'re in the process of setting one up, please reach out to support@noomerik.com and we can discuss your options.'
+      );
+      createApplication(data, 'pre-qual-failed', undefined, 'No business bank account');
       return false;
     }
 
@@ -137,7 +158,11 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
     }
 
     setErrors(e);
-    return Object.keys(e).length === 0;
+    if (Object.keys(e).length > 0) return false;
+
+    // Save as qualified pre-qual lead
+    createApplication(data, 'pre-qual');
+    return true;
   };
 
   const handleStep0Next = () => {
@@ -193,7 +218,12 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
         </div>
         <div>
           <label className="field-label">Phone *</label>
-          <input className="field-input" placeholder="(555) 123-4567" value={p.phone} onChange={(e) => updatePrincipal(p.id, { phone: e.target.value })} />
+          <input
+            className="field-input"
+            placeholder="(555) 123-4567"
+            value={p.phone}
+            onChange={(e) => updatePrincipal(p.id, { phone: formatPhone(e.target.value) })}
+          />
           {errors[`${idx}.phone`] && <p className="field-error">{errors[`${idx}.phone`]}</p>}
         </div>
       </div>
@@ -253,6 +283,17 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
                   <p className="text-sm text-muted-foreground mt-1">
                     We need your contact details and ownership information to get started.
                   </p>
+                </div>
+
+                <div>
+                  <label className="field-label">Company / Business Name *</label>
+                  <input
+                    className="field-input"
+                    placeholder="Your business name"
+                    value={pq.companyName}
+                    onChange={(e) => update({ companyName: e.target.value })}
+                  />
+                  {errors.companyName && <p className="field-error">{errors.companyName}</p>}
                 </div>
 
                 {renderPrincipalFields(principals[0], 0, false)}
@@ -345,11 +386,7 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
 
                 <div>
                   <label className="field-label">Where is your business located?</label>
-                  <select
-                    className="field-input"
-                    value={pq.location}
-                    onChange={(e) => update({ location: e.target.value })}
-                  >
+                  <select className="field-input" value={pq.location} onChange={(e) => update({ location: e.target.value })}>
                     <option value="">Select location...</option>
                     <option value="US">United States</option>
                     <option value="Canada">Canada</option>
@@ -359,18 +396,70 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
                 </div>
 
                 <div>
-                  <label className="field-label">Estimated Monthly Processing Volume</label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                    <input
-                      type="number"
-                      className="field-input pl-7"
-                      placeholder="25,000"
-                      value={pq.monthlyVolume}
-                      onChange={(e) =>
-                        update({ monthlyVolume: e.target.value ? Number(e.target.value) : '' })
-                      }
-                    />
+                  <label className="field-label">Current Payment Provider *</label>
+                  <select className="field-input" value={pq.currentProvider} onChange={(e) => update({ currentProvider: e.target.value })}>
+                    <option value="">Select provider...</option>
+                    {CURRENT_PROVIDERS.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  {errors.currentProvider && <p className="field-error">{errors.currentProvider}</p>}
+                </div>
+
+                {/* Show Stripe kickoff question if Stripe is selected */}
+                {pq.currentProvider === 'Stripe' && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                    <label className="field-label">Were you removed / kicked off from Stripe?</label>
+                    <div className="flex gap-3 mt-1">
+                      {[true, false].map((val) => (
+                        <button
+                          key={String(val)}
+                          type="button"
+                          onClick={() => update({ wasKickedOffStripe: val })}
+                          className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
+                            pq.wasKickedOffStripe === val
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-secondary text-secondary-foreground border-border hover:border-primary/30'
+                          }`}
+                        >
+                          {val ? 'Yes' : 'No'}
+                        </button>
+                      ))}
+                    </div>
+                    {pq.wasKickedOffStripe === true && (
+                      <p className="text-xs text-accent mt-2">
+                        ✓ We can help merchants transitioning from Stripe — volume requirements may be flexible.
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="field-label">Estimated Monthly Processing Volume *</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                      <input
+                        type="number"
+                        className="field-input pl-7"
+                        placeholder="25,000"
+                        value={pq.monthlyVolume}
+                        onChange={(e) => update({ monthlyVolume: e.target.value ? Number(e.target.value) : '' })}
+                      />
+                    </div>
+                    {errors.monthlyVolume && <p className="field-error">{errors.monthlyVolume}</p>}
+                  </div>
+                  <div>
+                    <label className="field-label">Average Ticket Price *</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                      <input
+                        type="number"
+                        className="field-input pl-7"
+                        placeholder="150"
+                        value={pq.averageTicket}
+                        onChange={(e) => update({ averageTicket: e.target.value ? Number(e.target.value) : '' })}
+                      />
+                    </div>
+                    {errors.averageTicket && <p className="field-error">{errors.averageTicket}</p>}
                   </div>
                 </div>
 
