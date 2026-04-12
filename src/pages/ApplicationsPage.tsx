@@ -568,6 +568,16 @@ const ApplicationsPage = () => {
                   <ReadOnlyField label="Routing Number" value={bk.routingNumber} />
                   <ReadOnlyField label="Account Number" value={bk.accountNumber ? `****${bk.accountNumber.slice(-4)}` : '—'} />
                 </div>
+                <div>
+                  <label className="field-label">Voided Check or Bank Letter</label>
+                  {bk.voidedCheckFile ? (
+                    <div className="w-32 mt-1">
+                      <DocThumbnail file={bk.voidedCheckFile} frosted />
+                    </div>
+                  ) : (
+                    <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">Not uploaded</div>
+                  )}
+                </div>
               </div>
             )}
           </section>
@@ -598,9 +608,9 @@ const ApplicationsPage = () => {
                   </div>
                 </div>
               </div>
-              {d.documents.bankStatements.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
+                {d.documents.bankStatements.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {d.documents.bankStatements.map((f, i) => (
                       <div key={i}>
@@ -609,11 +619,10 @@ const ApplicationsPage = () => {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-              {!d.documents.driversLicenseFront && !d.documents.driversLicenseBack && d.documents.bankStatements.length === 0 && (
-                <p className="text-sm text-muted-foreground">No documents uploaded.</p>
-              )}
+                ) : (
+                  <div className="field-input bg-secondary/50 cursor-default text-muted-foreground">No statements uploaded</div>
+                )}
+              </div>
             </div>
           </section>
         )}
