@@ -149,6 +149,53 @@ const ProcessingProfile = ({ onNext, onPrev }: Props) => {
         </div>
       )}
 
+      {/* ACH Section */}
+      <div className="border-t border-border/40 pt-4">
+        <h3 className="text-base font-bold text-foreground mb-1">ACH Processing</h3>
+        <p className="text-sm text-muted-foreground mb-3">Do you currently accept ACH payments?</p>
+        <div className="flex gap-3 mb-4">
+          {[true, false].map((val) => (
+            <button
+              key={String(val)}
+              type="button"
+              onClick={() => update({ acceptsAch: val })}
+              className={`px-5 py-2 rounded-lg border text-sm font-medium transition-all ${
+                pp.acceptsAch === val
+                  ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary/20'
+                  : 'border-border hover:border-primary/30 text-muted-foreground'
+              }`}
+            >
+              {val ? 'Yes' : 'No'}
+            </button>
+          ))}
+        </div>
+
+        {pp.acceptsAch && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="field-label">ACH Monthly Volume</label>
+                <MoneyInput value={pp.achMonthlyVolume} onChange={(v) => update({ achMonthlyVolume: v })} placeholder="10,000" />
+              </div>
+              <div>
+                <label className="field-label">ACH Average Ticket</label>
+                <MoneyInput value={pp.achAverageTicket} onChange={(v) => update({ achAverageTicket: v })} placeholder="500" />
+              </div>
+              <div>
+                <label className="field-label">ACH High Ticket</label>
+                <MoneyInput value={pp.achHighTicket} onChange={(v) => update({ achHighTicket: v })} placeholder="5,000" />
+              </div>
+            </div>
+            <div>
+              <label className="field-label">ACH Current Provider</label>
+              <input className="field-input" placeholder="e.g. Dwolla, Stripe ACH, etc."
+                value={pp.achCurrentProvider}
+                onChange={(e) => update({ achCurrentProvider: e.target.value })} />
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="flex justify-between pt-4">
         <button onClick={onPrev} className="btn-secondary">Back</button>
         <button onClick={() => validate() && onNext()} className="btn-primary">Continue</button>
