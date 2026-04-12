@@ -13,8 +13,9 @@ const truncateName = (name: string, maxLen = 24): string => {
   return base.slice(0, Math.max(keep, 6)) + '...' + ext;
 };
 
-const isImage = (file: File) => file.type.startsWith('image/');
-const isPdf = (file: File) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+const isRealFile = (file: unknown): file is File => file instanceof File;
+const isImage = (file: File) => file.type?.startsWith('image/');
+const isPdf = (file: File) => file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf');
 
 const PdfPreview = ({ file }: { file: File }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);

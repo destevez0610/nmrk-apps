@@ -2,10 +2,41 @@ import { StoredApplication, MerchantApplication } from '@/types/application';
 
 const STORE_KEY = 'merchant_applications';
 
+/** Strip File objects (not JSON-serializable) before persisting. */
+const sanitizeForStorage = (_key: string, value: unknown) => {
+  if (value instanceof File) return null;
+  return value;
+};
+
+/** Restore nullified file fields after JSON parse. */
+const sanitizeAfterLoad = (app: StoredApplication): StoredApplication => {
+  const d = app.data;
+  if (d.banking) {
+    if (d.banking.voidedCheckFile && !(d.banking.voidedCheckFile instanceof File)) {
+      d.banking.voidedCheckFile = null;
+    }
+  }
+  if (d.documents) {
+    if (d.documents.driversLicenseFront && !(d.documents.driversLicenseFront instanceof File)) {
+      d.documents.driversLicenseFront = null;
+    }
+    if (d.documents.driversLicenseBack && !(d.documents.driversLicenseBack instanceof File)) {
+      d.documents.driversLicenseBack = null;
+    }
+    if (d.documents.bankStatements) {
+      d.documents.bankStatements = d.documents.bankStatements.filter(
+        (f: unknown) => f instanceof File
+      );
+    }
+  }
+  return app;
+};
+
 export const getApplications = (): StoredApplication[] => {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    return (JSON.parse(raw) as StoredApplication[]).map(sanitizeAfterLoad);
   } catch {
     return [];
   }
@@ -19,7 +50,7 @@ export const saveApplication = (app: StoredApplication) => {
   } else {
     apps.push(app);
   }
-  localStorage.setItem(STORE_KEY, JSON.stringify(apps));
+  localStorage.setItem(STORE_KEY, JSON.stringify(apps, sanitizeForStorage));
 };
 
 export const createApplication = (
