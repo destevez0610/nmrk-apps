@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityEvent } from '@/types/application';
+import { ActivityEvent, PushProviderId } from '@/types/application';
 import { Send, Edit, AlertCircle, CheckCircle2, MessageSquare, RotateCw, PlusCircle, ArrowRightLeft, SendHorizonal } from 'lucide-react';
 
 const EVENT_CONFIG: Record<string, { icon: typeof Send; color: string }> = {
@@ -16,9 +16,10 @@ const EVENT_CONFIG: Record<string, { icon: typeof Send; color: string }> = {
 interface Props {
   events: ActivityEvent[];
   onAddNote?: (note: string) => void;
+  onResend?: (providerId: PushProviderId) => void;
 }
 
-const ActivityTrail = ({ events, onAddNote }: Props) => {
+const ActivityTrail = ({ events, onAddNote, onResend }: Props) => {
   const [noteText, setNoteText] = useState('');
 
   const handleSubmitNote = () => {
@@ -30,7 +31,6 @@ const ActivityTrail = ({ events, onAddNote }: Props) => {
 
   return (
     <div className="space-y-4">
-      {/* Add note input */}
       {onAddNote && (
         <div className="flex gap-2">
           <input
@@ -59,7 +59,6 @@ const ActivityTrail = ({ events, onAddNote }: Props) => {
         </div>
       ) : (
         <div className="relative">
-          {/* Timeline line */}
           <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
 
           <div className="space-y-0">
@@ -69,6 +68,7 @@ const ActivityTrail = ({ events, onAddNote }: Props) => {
               const time = new Date(event.timestamp);
               const dateStr = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
               const timeStr = time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+              const canResend = event.type === 'push_error' && event.provider && onResend;
 
               return (
                 <div key={event.id} className="relative flex gap-3 py-3 pl-1">
@@ -85,11 +85,22 @@ const ActivityTrail = ({ events, onAddNote }: Props) => {
                     {event.detail && (
                       <p className="text-xs text-muted-foreground mt-0.5">{event.detail}</p>
                     )}
-                    {event.provider && (
-                      <span className="inline-block text-[10px] font-medium text-primary bg-primary/5 px-1.5 py-0.5 rounded mt-1">
-                        {event.provider}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      {event.provider && (
+                        <span className="inline-block text-[10px] font-medium text-primary bg-primary/5 px-1.5 py-0.5 rounded">
+                          {event.provider}
+                        </span>
+                      )}
+                      {canResend && (
+                        <button
+                          onClick={() => onResend!(event.provider as PushProviderId)}
+                          className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive hover:text-destructive/80 bg-destructive/5 hover:bg-destructive/10 px-1.5 py-0.5 rounded transition-colors"
+                        >
+                          <RotateCw className="w-2.5 h-2.5" />
+                          Resend
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

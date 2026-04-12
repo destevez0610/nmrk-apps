@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { StoredApplication, MerchantApplication, CURRENT_PROVIDERS, PUSH_PROVIDERS } from '@/types/application';
+import { StoredApplication, MerchantApplication, CURRENT_PROVIDERS, PUSH_PROVIDERS, PushProviderId } from '@/types/application';
 import { getApplications, saveApplication } from '@/lib/applicationsStore';
-import { getActivityLog, addActivityEvent } from '@/lib/activityStore';
+import { getActivityLog, addActivityEvent, pushApplication } from '@/lib/activityStore';
 import { formatPhone } from '@/lib/formatPhone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, X, Pencil, Check, ArrowLeft,
   Building2, Users, CreditCard, Landmark, FileText as FileTextIcon,
-  ArrowUpDown, Filter, Save, Send, History,
+  ArrowUpDown, Filter, Save, Send, History, RotateCw,
 } from 'lucide-react';
 import DocThumbnail from '@/components/DocThumbnail';
 import ReadOnlyField from '@/components/ReadOnlyField';
@@ -87,6 +87,22 @@ const ApplicationsPage = () => {
   const [activeTab, setActiveTab] = useState('preQual');
   const [unsavedDialog, setUnsavedDialog] = useState<{ action: () => void } | null>(null);
   const [pushModalOpen, setPushModalOpen] = useState(false);
+  const [resending, setResending] = useState<string | null>(null);
+
+  const handleResend = async (providerId: PushProviderId) => {
+    if (!selected || resending) return;
+    const provider = PUSH_PROVIDERS.find((p) => p.id === providerId);
+    if (!provider) return;
+    setResending(providerId);
+    try {
+      await pushApplication(selected.id, providerId, provider.name);
+    } catch {}
+    setResending(null);
+    const freshApps = getApplications();
+    const freshApp = freshApps.find((a) => a.id === selected.id);
+    if (freshApp) setSelected(freshApp);
+    refresh();
+  };
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -423,6 +439,7 @@ const ApplicationsPage = () => {
         )}
 
         {activeTab === 'processing' && (
+          <>
           <section>
             <SectionHeader title="Processing Profile" sectionNumber={1} editing={isEditing('processing')} onStartEdit={() => startSectionEdit('processing')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
             {isEditing('processing') ? (
@@ -436,6 +453,13 @@ const ApplicationsPage = () => {
                   <EditField label="Card Present %" path="processingProfile.cardPresentPercent" type="number" />
                   <EditField label="Card Not Present %" path="processingProfile.cardNotPresentPercent" type="number" />
                 </div>
+                {(editData?.processingProfile.cardNotPresentPercent || 0) > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <EditField label="E-Commerce %" path="processingProfile.ecommercePercent" type="number" />
+                    <EditField label="Mail Order %" path="processingProfile.mailOrderPercent" type="number" />
+                    <EditField label="Phone Order %" path="processingProfile.phoneOrderPercent" type="number" />
+                  </div>
+                )}
                 <EditField label="Refund Policy URL" path="processingProfile.refundPolicyUrl" />
               </div>
             ) : (
@@ -457,10 +481,12 @@ const ApplicationsPage = () => {
                       <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.cardNotPresentPercent}%</div>
                     </div>
                   </div>
-                  <div className="mt-3 h-2 rounded-full bg-secondary overflow-hidden flex">
-                    <div className="bg-primary transition-all duration-300" style={{ width: `${pp.cardPresentPercent}%` }} />
-                    <div className="bg-accent transition-all duration-300" style={{ width: `${pp.cardNotPresentPercent}%` }} />
-                  </div>
+                  {(pp.cardPresentPercent > 0 || pp.cardNotPresentPercent > 0) && (
+                    <div className="mt-3 h-2 rounded-full bg-secondary overflow-hidden flex">
+                      <div className="bg-primary transition-all duration-300" style={{ width: `${pp.cardPresentPercent}%` }} />
+                      <div className="bg-accent transition-all duration-300" style={{ width: `${pp.cardNotPresentPercent}%` }} />
+                    </div>
+                  )}
                 </div>
                 {pp.cardNotPresentPercent > 0 && (
                   <div>
@@ -485,6 +511,60 @@ const ApplicationsPage = () => {
               </div>
             )}
           </section>
+
+          <div className="border-t border-border/40" />
+
+          <section>
+            <SectionHeader title="ACH Processing" sectionNumber={2} editing={isEditing('ach')} onStartEdit={() => startSectionEdit('ach')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
+            {isEditing('ach') ? (
+              <div className="space-y-3 pl-10">
+                <div>
+                  <label className="field-label">Do you currently accept ACH payments?</label>
+                  <div className="flex gap-3 mt-1">
+                    {[true, false].map((val) => (
+                      <button
+                        key={String(val)}
+                        type="button"
+                        onClick={() => updateField('processingProfile.acceptsAch', val)}
+                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                          editData?.processingProfile.acceptsAch === val
+                            ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary/20'
+                            : 'border-border hover:border-primary/30 text-muted-foreground'
+                        }`}
+                      >
+                        {val ? 'Yes' : 'No'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {editData?.processingProfile.acceptsAch && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <EditField label="ACH Monthly Volume" path="processingProfile.achMonthlyVolume" type="number" />
+                      <EditField label="ACH Average Ticket" path="processingProfile.achAverageTicket" type="number" />
+                      <EditField label="ACH High Ticket" path="processingProfile.achHighTicket" type="number" />
+                    </div>
+                    <EditField label="ACH Current Provider" path="processingProfile.achCurrentProvider" />
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4 pl-10">
+                <ReadOnlyField label="Accepts ACH Payments" value={pp.acceptsAch ? 'Yes' : 'No'} />
+                {pp.acceptsAch && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <ReadOnlyField label="ACH Monthly Volume" value={pp.achMonthlyVolume ? `$${Number(pp.achMonthlyVolume).toLocaleString()}` : ''} />
+                      <ReadOnlyField label="ACH Average Ticket" value={pp.achAverageTicket ? `$${Number(pp.achAverageTicket).toLocaleString()}` : ''} />
+                      <ReadOnlyField label="ACH High Ticket" value={pp.achHighTicket ? `$${Number(pp.achHighTicket).toLocaleString()}` : ''} />
+                    </div>
+                    <ReadOnlyField label="ACH Current Provider" value={pp.achCurrentProvider} />
+                  </>
+                )}
+              </div>
+            )}
+          </section>
+          </>
         )}
 
         {activeTab === 'ownership' && (
@@ -640,12 +720,12 @@ const ApplicationsPage = () => {
                 events={getActivityLog(selected!.id)}
                 onAddNote={(note) => {
                   addActivityEvent(selected!.id, 'note', 'Note added', note);
-                  // Re-select to refresh
                   const freshApps = getApplications();
                   const freshApp = freshApps.find((a) => a.id === selected!.id);
                   if (freshApp) setSelected(freshApp);
                   refresh();
                 }}
+                onResend={handleResend}
               />
             </div>
           </section>
@@ -827,8 +907,18 @@ const ApplicationsPage = () => {
                               r.status === 'accepted' ? 'bg-accent/10 text-accent' :
                               'bg-destructive/10 text-destructive';
                             return (
-                              <span key={r.provider} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
+                              <span key={r.provider} className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
                                 {prov?.name}: {r.status}
+                                {(r.status === 'error' || r.status === 'declined') && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleResend(r.provider); }}
+                                    className="ml-0.5 hover:opacity-70"
+                                    title="Resend"
+                                    disabled={resending === r.provider}
+                                  >
+                                    <RotateCw className={`w-2.5 h-2.5 ${resending === r.provider ? 'animate-spin' : ''}`} />
+                                  </button>
+                                )}
                               </span>
                             );
                           });
