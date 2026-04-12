@@ -47,7 +47,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
           {errors.legalName && <p className="field-error">{errors.legalName}</p>}
         </div>
         <div>
-          <label className="field-label">DBA (Doing Business As)</label>
+          <label className="field-label">DBA (Doing Business As) <span className="text-xs font-normal text-muted-foreground">(Optional)</span></label>
           <input className="field-input" value={bp.dba} onChange={(e) => update({ dba: e.target.value })} />
         </div>
       </div>
@@ -120,13 +120,13 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
           {errors.phoneNumber && <p className="field-error">{errors.phoneNumber}</p>}
         </div>
         <div>
-          <label className="field-label">Website URL</label>
+          <label className="field-label">Website URL <span className="text-xs font-normal text-muted-foreground">(Optional)</span></label>
           <input className="field-input" placeholder="https://" value={bp.websiteUrl} onChange={(e) => update({ websiteUrl: e.target.value })} />
         </div>
       </div>
 
       <div>
-        <label className="field-label">Business Start Date</label>
+        <label className="field-label">Business Start Date <span className="text-xs font-normal text-muted-foreground">(Optional)</span></label>
         <input type="date" className="field-input" max={new Date().toISOString().split('T')[0]} value={bp.businessStartDate} onChange={(e) => update({ businessStartDate: e.target.value })} />
       </div>
 
