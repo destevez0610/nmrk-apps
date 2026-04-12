@@ -27,6 +27,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
   const { data, setData } = useApplication();
   const owners = data.owners;
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [openCalendarId, setOpenCalendarId] = useState<string | null>(null);
   const states = data.preQualification.location === 'Canada' ? CANADIAN_PROVINCES : US_STATES;
 
   const totalOwnership = owners.reduce((sum, o) => sum + (Number(o.ownershipPercent) || 0), 0);
@@ -129,7 +130,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="field-label">Date of Birth *</label>
-              <Popover>
+              <Popover open={openCalendarId === owner.id} onOpenChange={(open) => setOpenCalendarId(open ? owner.id : null)}>
                 <PopoverTrigger asChild>
                   <button type="button" className={cn("field-input flex items-center justify-between text-left w-full", !owner.dob && "text-muted-foreground")}>
                     {owner.dob ? format(new Date(owner.dob + 'T00:00:00'), 'MM/dd/yyyy') : 'mm/dd/yyyy'}
@@ -140,7 +141,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
                   <Calendar
                     mode="single"
                     selected={owner.dob ? new Date(owner.dob + 'T00:00:00') : undefined}
-                    onSelect={(date) => updateOwner(owner.id, { dob: date ? format(date, 'yyyy-MM-dd') : '' })}
+                    onSelect={(date) => { updateOwner(owner.id, { dob: date ? format(date, 'yyyy-MM-dd') : '' }); setOpenCalendarId(null); }}
                     toDate={new Date(maxDob + 'T00:00:00')}
                     fromDate={new Date(1900, 0, 1)}
                     defaultMonth={owner.dob ? new Date(owner.dob + 'T00:00:00') : new Date(maxDob + 'T00:00:00')}
