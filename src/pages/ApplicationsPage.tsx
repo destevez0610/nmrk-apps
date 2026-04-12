@@ -898,7 +898,7 @@ const ApplicationsPage = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
-              className="bg-card rounded-xl border border-border shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col"
+              className="bg-card rounded-xl border border-border shadow-xl w-full max-w-3xl h-[85vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
