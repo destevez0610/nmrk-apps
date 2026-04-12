@@ -129,7 +129,7 @@ export interface PushRecord {
   id: string;
   provider: PushProviderId;
   pushedAt: string;
-  status: 'pending' | 'accepted' | 'declined' | 'error';
+  status: 'pending' | 'accepted' | 'declined' | 'error' | 'cancelled';
   externalRef?: string;
   responseMessage?: string;
 }
