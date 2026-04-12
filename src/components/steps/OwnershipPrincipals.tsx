@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { OwnerData, US_STATES, CANADIAN_PROVINCES } from '@/types/application';
 import { formatPhone } from '@/lib/formatPhone';
+import { formatSsn } from '@/lib/formatSsn';
 import { Plus, Trash2 } from 'lucide-react';
 
 interface Props {
@@ -127,7 +128,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
             <div>
               <label className="field-label">SSN *</label>
               <input className="field-input font-mono" placeholder="XXX-XX-XXXX" maxLength={11}
-                value={owner.ssn} onChange={(e) => updateOwner(owner.id, { ssn: e.target.value })} />
+                value={owner.ssn} onChange={(e) => updateOwner(owner.id, { ssn: formatSsn(e.target.value) })} />
               {errors[`${idx}.ssn`] && <p className="field-error">{errors[`${idx}.ssn`]}</p>}
             </div>
             <div>
