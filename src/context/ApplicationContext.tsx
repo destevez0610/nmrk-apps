@@ -16,6 +16,8 @@ interface ApplicationContextType {
   setIsSubmitted: (v: boolean) => void;
   confirmationId: string;
   setConfirmationId: (id: string) => void;
+  signature: string | null;
+  setSignature: (sig: string | null) => void;
 }
 
 const ApplicationContext = createContext<ApplicationContextType | null>(null);
@@ -26,6 +28,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [direction, setDirection] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [confirmationId, setConfirmationId] = useState('');
+  const [signature, setSignature] = useState<string | null>(null);
 
   const updateData = useCallback(
     <K extends keyof MerchantApplication>(
@@ -58,6 +61,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setIsSubmitted,
         confirmationId,
         setConfirmationId,
+        signature,
+        setSignature,
       }}
     >
       {children}
