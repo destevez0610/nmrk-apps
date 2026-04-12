@@ -82,7 +82,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Step 0 validation: primary principal info
   const validateStep0 = () => {
     const e: Record<string, string> = {};
     const p = principals[0];
@@ -90,26 +89,22 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
     if (!p.lastName.trim()) e['0.lastName'] = 'Required';
     if (!p.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) e['0.email'] = 'Valid email required';
     if (!p.phone.trim()) e['0.phone'] = 'Required';
-    if (!p.title.trim()) e['0.title'] = 'Required';
-    if (!p.ownershipPercent || Number(p.ownershipPercent) <= 0 || Number(p.ownershipPercent) > 100)
-      e['0.ownership'] = 'Enter a valid percentage (1-100)';
-    if (!p.bestTimeToContact) e['0.bestTime'] = 'Required';
-    setErrors(e);
+    if (!p.title) e['0.title'] = 'Required';
     if (!p.ownershipPercent || Number(p.ownershipPercent) <= 0 || Number(p.ownershipPercent) > 100)
       e['0.ownership'] = 'Enter a valid percentage (1-100)';
     setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  // Step 1 validation: additional principals
   const validateStep1 = () => {
     const e: Record<string, string> = {};
     principals.forEach((p, i) => {
-      if (i === 0) return; // already validated
+      if (i === 0) return;
       if (!p.firstName.trim()) e[`${i}.firstName`] = 'Required';
       if (!p.lastName.trim()) e[`${i}.lastName`] = 'Required';
       if (!p.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) e[`${i}.email`] = 'Valid email required';
       if (!p.phone.trim()) e[`${i}.phone`] = 'Required';
-      if (!p.title.trim()) e[`${i}.title`] = 'Required';
+      if (!p.title) e[`${i}.title`] = 'Required';
       if (!p.ownershipPercent || Number(p.ownershipPercent) <= 0) e[`${i}.ownership`] = 'Required';
     });
     if (totalOwnership < 51) e.total = 'Combined ownership must be at least 51%';
@@ -118,7 +113,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
     return Object.keys(e).length === 0;
   };
 
-  // Step 2 validation: eligibility
   const validateEligibility = (): boolean => {
     const e: Record<string, string> = {};
 
@@ -150,7 +144,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
     if (!validateStep0()) return;
     const primary = principals[0];
     if (Number(primary.ownershipPercent) >= 51) {
-      // Skip additional principals, go to eligibility
       goTo(2);
     } else {
       goTo(1);
@@ -205,10 +198,13 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className="field-label">Title *</label>
-          <input className="field-input" placeholder="CEO, Owner, Partner..." value={p.title} onChange={(e) => updatePrincipal(p.id, { title: e.target.value })} />
+          <select className="field-input" value={p.title} onChange={(e) => updatePrincipal(p.id, { title: e.target.value })}>
+            <option value="">Select title...</option>
+            {TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
           {errors[`${idx}.title`] && <p className="field-error">{errors[`${idx}.title`]}</p>}
         </div>
         <div>
@@ -217,23 +213,9 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
             onChange={(e) => updatePrincipal(p.id, { ownershipPercent: e.target.value ? Number(e.target.value) : '' })} />
           {errors[`${idx}.ownership`] && <p className="field-error">{errors[`${idx}.ownership`]}</p>}
         </div>
-        <div>
-          <label className="field-label">Best Time to Contact *</label>
-          <select className="field-input" value={p.bestTimeToContact} onChange={(e) => updatePrincipal(p.id, { bestTimeToContact: e.target.value })}>
-            <option value="">Select...</option>
-            {BEST_TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-          {errors[`${idx}.bestTime`] && <p className="field-error">{errors[`${idx}.bestTime`]}</p>}
-        </div>
       </div>
     </div>
   );
-
-  const stepIndicators = [
-    { icon: UserPlus, label: 'Your Info' },
-    { icon: Users, label: 'Principals' },
-    { icon: ClipboardCheck, label: 'Eligibility' },
-  ];
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -241,7 +223,7 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-xl"
+        className="w-full max-w-3xl"
       >
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
@@ -251,25 +233,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
           <p className="text-muted-foreground mt-2 text-sm">
             Let's collect some information and check your eligibility.
           </p>
-        </div>
-
-        {/* Step indicators */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          {stepIndicators.map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                i === step ? 'bg-primary text-primary-foreground' :
-                i < step ? 'bg-accent/10 text-accent' : 'bg-secondary text-muted-foreground'
-              }`}>
-                <s.icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{s.label}</span>
-                {i < step && <CheckCircle2 className="w-3.5 h-3.5" />}
-              </div>
-              {i < stepIndicators.length - 1 && (
-                <div className={`w-8 h-0.5 rounded ${i < step ? 'bg-accent' : 'bg-border'}`} />
-              )}
-            </div>
-          ))}
         </div>
 
         <AnimatePresence mode="wait" custom={dir}>
@@ -321,14 +284,12 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
 
                 {errors.total && <p className="field-error">{errors.total}</p>}
 
-                {/* Show primary (read-only summary) */}
                 <div className="p-3 rounded-lg bg-secondary/50 border border-border">
                   <p className="text-sm text-foreground font-medium">
                     {principals[0].firstName} {principals[0].lastName} — {principals[0].title} ({principals[0].ownershipPercent}%)
                   </p>
                 </div>
 
-                {/* Additional principals */}
                 {principals.slice(1).map((p, i) => renderPrincipalFields(p, i + 1, true))}
 
                 <button type="button" onClick={addPrincipal} className="btn-secondary flex items-center gap-2 text-sm w-full justify-center">
@@ -382,7 +343,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
                   </motion.div>
                 )}
 
-                {/* Location */}
                 <div>
                   <label className="field-label">Where is your business located?</label>
                   <select
@@ -398,7 +358,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
                   {errors.location && <p className="field-error">{errors.location}</p>}
                 </div>
 
-                {/* Monthly Volume */}
                 <div>
                   <label className="field-label">Estimated Monthly Processing Volume</label>
                   <div className="relative">
@@ -415,7 +374,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
                   </div>
                 </div>
 
-                {/* Business Bank Account */}
                 <div>
                   <label className="field-label">Do you have a business bank account?</label>
                   <div className="flex gap-3 mt-1">
@@ -436,7 +394,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
                   </div>
                 </div>
 
-                {/* Documentation */}
                 <div>
                   <label className="field-label">Available Documentation</label>
                   <p className="text-xs text-muted-foreground mb-3">All items are required to proceed.</p>
