@@ -2,6 +2,10 @@ import { useState, useMemo } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2, Pencil, FileText } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import SignaturePad from '@/components/SignaturePad';
 
 interface Props {
@@ -56,6 +60,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep }: Props) => {
   const { data, isSubmitted, setIsSubmitted, confirmationId, setConfirmationId, signature, setSignature } = useApplication();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sigError, setSigError] = useState('');
+  const [editTarget, setEditTarget] = useState<number | null>(null);
   const bp = data.businessProfile;
   const pp = data.processingProfile;
   const bk = data.banking;
@@ -116,7 +121,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep }: Props) => {
         {onGoToStep && (
           <button
             type="button"
-            onClick={() => onGoToStep(stepIndex)}
+            onClick={() => setEditTarget(stepIndex)}
             className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
           >
             <Pencil className="w-3 h-3" />
@@ -227,6 +232,23 @@ const ReviewSubmit = ({ onPrev, onGoToStep }: Props) => {
         <button onClick={onPrev} className="btn-secondary">Back</button>
         <button onClick={handleSubmit} className="btn-accent">Submit Application</button>
       </div>
+
+      <AlertDialog open={editTarget !== null} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave Review Page?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You'll be taken back to edit this section. Your other information is saved and you can return to review when ready.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (editTarget !== null && onGoToStep) onGoToStep(editTarget); }}>
+              Continue to Edit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
