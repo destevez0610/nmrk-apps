@@ -79,6 +79,40 @@ export const pushApplication = async (
   return record;
 };
 
+/** Cancel/withdraw a pending push to a provider */
+export const cancelPush = async (
+  appId: string,
+  providerId: PushProviderId,
+  providerName: string,
+): Promise<void> => {
+  // Simulate API call to cancel
+  await new Promise((r) => setTimeout(r, 1500));
+
+  const apps = getApplications();
+  const app = apps.find((a) => a.id === appId);
+  if (!app) throw new Error('Application not found');
+
+  // Update the latest pending push record for this provider to cancelled
+  if (app.pushHistory) {
+    for (let i = app.pushHistory.length - 1; i >= 0; i--) {
+      if (app.pushHistory[i].provider === providerId && app.pushHistory[i].status === 'pending') {
+        app.pushHistory[i].status = 'cancelled';
+        app.pushHistory[i].responseMessage = 'Submission cancelled by user.';
+        break;
+      }
+    }
+  }
+  saveApplication(app);
+
+  addActivityEvent(
+    appId,
+    'status_change',
+    `Submission to ${providerName} cancelled`,
+    'Application withdrawn from provider.',
+    providerId,
+  );
+};
+
 /** Get activity log for an application, newest first */
 export const getActivityLog = (appId: string): ActivityEvent[] => {
   const apps = getApplications();
