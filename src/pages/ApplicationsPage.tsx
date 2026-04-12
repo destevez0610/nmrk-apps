@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { StoredApplication, MerchantApplication, CURRENT_PROVIDERS } from '@/types/application';
 import { getApplications, saveApplication } from '@/lib/applicationsStore';
 import { formatPhone } from '@/lib/formatPhone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search, X, ChevronLeft, Eye, Pencil, Check, ArrowLeft,
+  Search, X, Eye, Pencil, Check, ArrowLeft,
   Building2, Users, CreditCard, Landmark, FileText,
+  ArrowUpDown, Filter,
 } from 'lucide-react';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -23,6 +24,9 @@ const TITLES = [
   'Sole Proprietor', 'Partner', 'Authorized Signer', 'Other',
 ];
 
+type SortField = 'date' | 'company' | 'volume' | 'status';
+type SortDir = 'asc' | 'desc';
+
 const ApplicationsPage = () => {
   const navigate = useNavigate();
   const [apps, setApps] = useState<StoredApplication[]>([]);
@@ -32,17 +36,66 @@ const ApplicationsPage = () => {
   const [editData, setEditData] = useState<MerchantApplication | null>(null);
   const [activeTab, setActiveTab] = useState('preQual');
 
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [providerFilter, setProviderFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
   const refresh = useCallback(() => setApps(getApplications()), []);
   useEffect(() => { refresh(); }, [refresh]);
 
-  const filtered = apps.filter((a) => {
-    const q = search.toLowerCase();
-    const p = a.data.preQualification.principals[0];
-    const name = `${p?.firstName} ${p?.lastName}`.toLowerCase();
-    const company = a.data.preQualification.companyName?.toLowerCase() || '';
-    const email = p?.email?.toLowerCase() || '';
-    return name.includes(q) || company.includes(q) || email.includes(q) || a.status.includes(q);
-  });
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir('desc');
+    }
+  };
+
+  const uniqueProviders = useMemo(() => {
+    const providers = new Set<string>();
+    apps.forEach((a) => {
+      if (a.data.preQualification.currentProvider) providers.add(a.data.preQualification.currentProvider);
+    });
+    return Array.from(providers).sort();
+  }, [apps]);
+
+  const filtered = useMemo(() => {
+    let result = apps.filter((a) => {
+      const q = search.toLowerCase();
+      const p = a.data.preQualification.principals[0];
+      const name = `${p?.firstName} ${p?.lastName}`.toLowerCase();
+      const company = a.data.preQualification.companyName?.toLowerCase() || '';
+      const email = p?.email?.toLowerCase() || '';
+      const matchSearch = name.includes(q) || company.includes(q) || email.includes(q) || a.status.includes(q);
+      const matchStatus = statusFilter === 'all' || a.status === statusFilter;
+      const matchProvider = providerFilter === 'all' || a.data.preQualification.currentProvider === providerFilter;
+      return matchSearch && matchStatus && matchProvider;
+    });
+
+    result.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'date':
+          cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case 'company':
+          cmp = (a.data.preQualification.companyName || '').localeCompare(b.data.preQualification.companyName || '');
+          break;
+        case 'volume':
+          cmp = (Number(a.data.preQualification.monthlyVolume) || 0) - (Number(b.data.preQualification.monthlyVolume) || 0);
+          break;
+        case 'status':
+          cmp = a.status.localeCompare(b.status);
+          break;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+    return result;
+  }, [apps, search, statusFilter, providerFilter, sortField, sortDir]);
 
   const openApp = (app: StoredApplication) => {
     setSelected(app);
@@ -131,7 +184,18 @@ const ApplicationsPage = () => {
     );
   };
 
-  // Modal content
+  const SortHeader = ({ label, field, className }: { label: string; field: SortField; className?: string }) => (
+    <th
+      className={`text-left text-xs font-semibold text-muted-foreground px-4 py-3 cursor-pointer hover:text-foreground select-none ${className || ''}`}
+      onClick={() => toggleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        <ArrowUpDown className={`w-3 h-3 ${sortField === field ? 'text-primary' : 'opacity-40'}`} />
+      </div>
+    </th>
+  );
+
   const renderModalContent = () => {
     if (!selected) return null;
     const d = editing ? editData! : selected.data;
@@ -339,15 +403,50 @@ const ApplicationsPage = () => {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            className="field-input pl-10"
-            placeholder="Search by name, company, email, or status..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        {/* Search + Filters */}
+        <div className="space-y-3 mb-6">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              className="field-input pl-10"
+              placeholder="Search by name, company, email, or status..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Filters:</span>
+            </div>
+            <select
+              className="field-input !w-auto text-xs py-1.5 px-3"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">All Statuses</option>
+              <option value="pre-qual">Pre-Qualified</option>
+              <option value="pre-qual-failed">Not Qualified</option>
+              <option value="in-progress">In Progress</option>
+              <option value="submitted">Submitted</option>
+            </select>
+            <select
+              className="field-input !w-auto text-xs py-1.5 px-3"
+              value={providerFilter}
+              onChange={(e) => setProviderFilter(e.target.value)}
+            >
+              <option value="all">All Providers</option>
+              {uniqueProviders.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            {(statusFilter !== 'all' || providerFilter !== 'all') && (
+              <button
+                onClick={() => { setStatusFilter('all'); setProviderFilter('all'); }}
+                className="text-xs text-primary hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Table */}
@@ -355,12 +454,12 @@ const ApplicationsPage = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-secondary/30">
-                <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Company</th>
+                <SortHeader label="Company" field="company" />
                 <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Contact</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3 hidden md:table-cell">Provider</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3 hidden md:table-cell">Volume</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3">Status</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground px-4 py-3 hidden lg:table-cell">Date</th>
+                <SortHeader label="Volume" field="volume" className="hidden md:table-cell" />
+                <SortHeader label="Status" field="status" />
+                <SortHeader label="Date" field="date" className="hidden lg:table-cell" />
               </tr>
             </thead>
             <tbody>

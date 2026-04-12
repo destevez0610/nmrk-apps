@@ -9,6 +9,13 @@ interface Props {
   onPrev: () => void;
 }
 
+/** Get max DOB date (must be 18+) */
+const getMaxDob = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d.toISOString().split('T')[0];
+};
+
 const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
   const { data, setData } = useApplication();
   const owners = data.owners;
@@ -16,6 +23,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
   const states = data.preQualification.location === 'Canada' ? CANADIAN_PROVINCES : US_STATES;
 
   const totalOwnership = owners.reduce((sum, o) => sum + (Number(o.ownershipPercent) || 0), 0);
+  const maxDob = getMaxDob();
 
   const updateOwner = (id: string, fields: Partial<OwnerData>) => {
     setData((prev) => ({
@@ -49,7 +57,11 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
     owners.forEach((o, i) => {
       if (!o.firstName.trim()) e[`${i}.firstName`] = 'Required';
       if (!o.lastName.trim()) e[`${i}.lastName`] = 'Required';
-      if (!o.dob) e[`${i}.dob`] = 'Required';
+      if (!o.dob) {
+        e[`${i}.dob`] = 'Required';
+      } else if (o.dob > maxDob) {
+        e[`${i}.dob`] = 'Must be at least 18 years old';
+      }
       if (!o.ssn || !/^\d{9}$/.test(o.ssn.replace(/\D/g, ''))) e[`${i}.ssn`] = 'Valid 9-digit SSN required';
       if (!o.streetAddress.trim()) e[`${i}.streetAddress`] = 'Required';
       if (!o.city.trim()) e[`${i}.city`] = 'Required';
@@ -109,7 +121,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="field-label">Date of Birth *</label>
-              <input type="date" className="field-input" value={owner.dob} onChange={(e) => updateOwner(owner.id, { dob: e.target.value })} />
+              <input type="date" className="field-input" max={maxDob} value={owner.dob} onChange={(e) => updateOwner(owner.id, { dob: e.target.value })} />
               {errors[`${idx}.dob`] && <p className="field-error">{errors[`${idx}.dob`]}</p>}
             </div>
             <div>

@@ -3,6 +3,7 @@ import { useApplication } from '@/context/ApplicationContext';
 import { PreQualificationData, PreQualPrincipal, CURRENT_PROVIDERS } from '@/types/application';
 import { createApplication } from '@/lib/applicationsStore';
 import { formatPhone } from '@/lib/formatPhone';
+import MoneyInput from '@/components/MoneyInput';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, AlertTriangle, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 
@@ -129,7 +130,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
     if (!pq.currentProvider) e.currentProvider = 'Please select your current provider.';
     if (pq.averageTicket === '') e.averageTicket = 'Please enter your average ticket price.';
 
-    // Volume check with Stripe kickoff override
     const volume = Number(pq.monthlyVolume) || 0;
     const isStripeKickoff = pq.wasKickedOffStripe === true;
     if (pq.monthlyVolume === '' || volume <= 0) {
@@ -142,7 +142,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
       createApplication(data, 'pre-qual-failed', undefined, 'Volume below $10k');
       return false;
     }
-    // If kicked off Stripe and volume < $10k, we allow it — the override
 
     if (pq.hasBusinessBankAccount !== true) {
       setNotQualifiedMsg(
@@ -160,7 +159,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
     setErrors(e);
     if (Object.keys(e).length > 0) return false;
 
-    // Save as qualified pre-qual lead
     createApplication(data, 'pre-qual');
     return true;
   };
@@ -404,7 +402,6 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
                   {errors.currentProvider && <p className="field-error">{errors.currentProvider}</p>}
                 </div>
 
-                {/* Show Stripe kickoff question if Stripe is selected */}
                 {pq.currentProvider === 'Stripe' && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
                     <label className="field-label">Were you removed / kicked off from Stripe?</label>
@@ -435,30 +432,12 @@ const PreQualification = ({ onQualified }: { onQualified: () => void }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="field-label">Estimated Monthly Processing Volume *</label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                      <input
-                        type="number"
-                        className="field-input pl-7"
-                        placeholder="25,000"
-                        value={pq.monthlyVolume}
-                        onChange={(e) => update({ monthlyVolume: e.target.value ? Number(e.target.value) : '' })}
-                      />
-                    </div>
+                    <MoneyInput value={pq.monthlyVolume} onChange={(v) => update({ monthlyVolume: v })} placeholder="25,000" />
                     {errors.monthlyVolume && <p className="field-error">{errors.monthlyVolume}</p>}
                   </div>
                   <div>
                     <label className="field-label">Average Ticket Price *</label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                      <input
-                        type="number"
-                        className="field-input pl-7"
-                        placeholder="150"
-                        value={pq.averageTicket}
-                        onChange={(e) => update({ averageTicket: e.target.value ? Number(e.target.value) : '' })}
-                      />
-                    </div>
+                    <MoneyInput value={pq.averageTicket} onChange={(v) => update({ averageTicket: v })} placeholder="150" />
                     {errors.averageTicket && <p className="field-error">{errors.averageTicket}</p>}
                   </div>
                 </div>
