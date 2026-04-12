@@ -21,6 +21,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
   const { data, updateData } = useApplication();
   const bp = data.businessProfile;
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const update = (fields: Partial<typeof bp>) => updateData('businessProfile', fields);
   const isSoleProp = bp.businessStructure === 'Sole Proprietorship';
@@ -137,7 +138,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
 
       <div>
         <label className="field-label">Business Start Date <span className="text-xs font-normal text-muted-foreground">(Optional)</span></label>
-        <Popover>
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
             <button type="button" className={cn("field-input flex items-center justify-between text-left", !bp.businessStartDate && "text-muted-foreground")}>
               {bp.businessStartDate ? format(new Date(bp.businessStartDate + 'T00:00:00'), 'MM/dd/yyyy') : 'mm/dd/yyyy'}
@@ -148,7 +149,7 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
             <Calendar
               mode="single"
               selected={bp.businessStartDate ? new Date(bp.businessStartDate + 'T00:00:00') : undefined}
-              onSelect={(date) => update({ businessStartDate: date ? format(date, 'yyyy-MM-dd') : '' })}
+              onSelect={(date) => { update({ businessStartDate: date ? format(date, 'yyyy-MM-dd') : '' }); setCalendarOpen(false); }}
               toDate={new Date()}
               fromDate={new Date(1900, 0, 1)}
             />
