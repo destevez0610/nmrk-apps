@@ -135,10 +135,18 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sigError, setSigError] = useState('');
   const [editTarget, setEditTarget] = useState<number | null>(null);
+  const [openSections, setOpenSections] = useState<Record<number, boolean>>({ 1: true, 2: true, 3: true, 4: true, 5: true });
   const bp = data.businessProfile;
   const pp = data.processingProfile;
   const bk = data.banking;
   const docs = data.documents;
+
+  const allExpanded = Object.values(openSections).every(Boolean);
+  const toggleAll = useCallback(() => {
+    const newState = !allExpanded;
+    setOpenSections({ 1: newState, 2: newState, 3: newState, 4: newState, 5: newState });
+  }, [allExpanded]);
+  const toggleSection = (n: number) => () => setOpenSections((prev) => ({ ...prev, [n]: !prev[n] }));
 
   const handleSubmit = async () => {
     if (!signature) {
@@ -210,6 +218,14 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
                 <p className="text-[11px] text-muted-foreground">Date</p>
                 <p className="text-xs font-medium text-foreground">{today}</p>
               </div>
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-secondary text-muted-foreground hover:text-foreground transition-colors print:hidden"
+              >
+                <ChevronsUpDown className="w-3.5 h-3.5" />
+                {allExpanded ? 'Collapse All' : 'Expand All'}
+              </button>
               <button
                 type="button"
                 onClick={() => window.print()}
