@@ -436,6 +436,13 @@ const ApplicationsPage = () => {
                   <EditField label="Card Present %" path="processingProfile.cardPresentPercent" type="number" />
                   <EditField label="Card Not Present %" path="processingProfile.cardNotPresentPercent" type="number" />
                 </div>
+                {(editData?.processingProfile.cardNotPresentPercent || 0) > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <EditField label="E-Commerce %" path="processingProfile.ecommercePercent" type="number" />
+                    <EditField label="Mail Order %" path="processingProfile.mailOrderPercent" type="number" />
+                    <EditField label="Phone Order %" path="processingProfile.phoneOrderPercent" type="number" />
+                  </div>
+                )}
                 <EditField label="Refund Policy URL" path="processingProfile.refundPolicyUrl" />
               </div>
             ) : (
@@ -457,10 +464,12 @@ const ApplicationsPage = () => {
                       <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.cardNotPresentPercent}%</div>
                     </div>
                   </div>
-                  <div className="mt-3 h-2 rounded-full bg-secondary overflow-hidden flex">
-                    <div className="bg-primary transition-all duration-300" style={{ width: `${pp.cardPresentPercent}%` }} />
-                    <div className="bg-accent transition-all duration-300" style={{ width: `${pp.cardNotPresentPercent}%` }} />
-                  </div>
+                  {(pp.cardPresentPercent > 0 || pp.cardNotPresentPercent > 0) && (
+                    <div className="mt-3 h-2 rounded-full bg-secondary overflow-hidden flex">
+                      <div className="bg-primary transition-all duration-300" style={{ width: `${pp.cardPresentPercent}%` }} />
+                      <div className="bg-accent transition-all duration-300" style={{ width: `${pp.cardNotPresentPercent}%` }} />
+                    </div>
+                  )}
                 </div>
                 {pp.cardNotPresentPercent > 0 && (
                   <div>
@@ -482,6 +491,60 @@ const ApplicationsPage = () => {
                   </div>
                 )}
                 {pp.refundPolicyUrl && <ReadOnlyField label="Refund Policy URL" value={pp.refundPolicyUrl} />}
+              </div>
+            )}
+          </section>
+
+          <div className="border-t border-border/40" />
+
+          {/* ACH Section */}
+          <section>
+            <SectionHeader title="ACH Processing" sectionNumber={2} editing={isEditing('ach')} onStartEdit={() => startSectionEdit('ach')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
+            {isEditing('ach') ? (
+              <div className="space-y-3 pl-10">
+                <div>
+                  <label className="field-label">Do you currently accept ACH payments?</label>
+                  <div className="flex gap-3 mt-1">
+                    {[true, false].map((val) => (
+                      <button
+                        key={String(val)}
+                        type="button"
+                        onClick={() => updateField('processingProfile.acceptsAch', val)}
+                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                          editData?.processingProfile.acceptsAch === val
+                            ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary/20'
+                            : 'border-border hover:border-primary/30 text-muted-foreground'
+                        }`}
+                      >
+                        {val ? 'Yes' : 'No'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {editData?.processingProfile.acceptsAch && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <EditField label="ACH Monthly Volume" path="processingProfile.achMonthlyVolume" type="number" />
+                      <EditField label="ACH Average Ticket" path="processingProfile.achAverageTicket" type="number" />
+                      <EditField label="ACH High Ticket" path="processingProfile.achHighTicket" type="number" />
+                    </div>
+                    <EditField label="ACH Current Provider" path="processingProfile.achCurrentProvider" />
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4 pl-10">
+                <ReadOnlyField label="Accepts ACH Payments" value={pp.acceptsAch ? 'Yes' : 'No'} />
+                {pp.acceptsAch && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <ReadOnlyField label="ACH Monthly Volume" value={pp.achMonthlyVolume ? `$${Number(pp.achMonthlyVolume).toLocaleString()}` : ''} />
+                      <ReadOnlyField label="ACH Average Ticket" value={pp.achAverageTicket ? `$${Number(pp.achAverageTicket).toLocaleString()}` : ''} />
+                      <ReadOnlyField label="ACH High Ticket" value={pp.achHighTicket ? `$${Number(pp.achHighTicket).toLocaleString()}` : ''} />
+                    </div>
+                    <ReadOnlyField label="ACH Current Provider" value={pp.achCurrentProvider} />
+                  </>
+                )}
               </div>
             )}
           </section>
