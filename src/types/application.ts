@@ -1,4 +1,16 @@
+export interface PreQualPrincipal {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  title: string;
+  ownershipPercent: number | '';
+  bestTimeToContact: string;
+}
+
 export interface PreQualificationData {
+  principals: PreQualPrincipal[];
   location: string;
   monthlyVolume: number | '';
   hasBusinessBankAccount: boolean | null;
@@ -76,6 +88,18 @@ export interface MerchantApplication {
 
 export const initialApplication: MerchantApplication = {
   preQualification: {
+    principals: [
+      {
+        id: crypto.randomUUID(),
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        title: '',
+        ownershipPercent: '',
+        bestTimeToContact: '',
+      },
+    ],
     location: '',
     monthlyVolume: '',
     hasBusinessBankAccount: null,
