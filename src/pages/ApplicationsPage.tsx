@@ -1146,12 +1146,32 @@ const ApplicationsPage = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved edits in this section. Would you like to save before continuing, or discard your changes?
+            <AlertDialogDescription asChild>
+              <div>
+                <p className="mb-3">You have unsaved edits in this section. Would you like to save before continuing, or discard your changes?</p>
+                {(() => {
+                  const changed = getChangedFields();
+                  if (changed.length === 0) return null;
+                  return (
+                    <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                      <p className="text-xs font-semibold text-foreground mb-2">Changed fields:</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                        {changed.map((name) => (
+                          <span key={name} className="text-xs text-warning font-medium truncate">• {name}</span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => {
+              setUnsavedDialog(null);
+              setShakeFields(true);
+              setTimeout(() => setShakeFields(false), 600);
+            }}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 saveSectionEdit();
