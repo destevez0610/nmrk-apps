@@ -82,6 +82,7 @@ const ApplicationsPage = () => {
   const [unsavedDialog, setUnsavedDialog] = useState<{ action: () => void } | null>(null);
   const [pushModalOpen, setPushModalOpen] = useState(false);
   const [resending, setResending] = useState<string | null>(null);
+  const [shakeFields, setShakeFields] = useState(false);
 
   const handleResend = async (providerId: PushProviderId) => {
     if (!selected || resending) return;
