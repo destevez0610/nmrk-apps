@@ -220,6 +220,103 @@ const ApplicationsPage = () => {
     setEditData(clone);
   };
 
+  const getFieldValue = (data: any, path: string) => {
+    const keys = path.split('.');
+    let val = data;
+    for (const k of keys) val = val?.[k];
+    return val;
+  };
+
+  const resetField = (path: string) => {
+    if (!selected) return;
+    const originalVal = getFieldValue(selected.data, path);
+    updateField(path, originalVal);
+  };
+
+  // Map of section → array of {label, path} for all editable fields
+  const SECTION_FIELDS: Record<string, { label: string; path: string }[]> = {
+    preQual: [
+      { label: 'Company Name', path: 'preQualification.companyName' },
+      { label: 'Location', path: 'preQualification.location' },
+      { label: 'Monthly Volume', path: 'preQualification.monthlyVolume' },
+      { label: 'Average Ticket', path: 'preQualification.averageTicket' },
+      { label: 'Current Provider', path: 'preQualification.currentProvider' },
+    ],
+    principals: (() => {
+      const fields: { label: string; path: string }[] = [];
+      const count = selected?.data?.preQualification?.principals?.length || 0;
+      for (let i = 0; i < count; i++) {
+        fields.push(
+          { label: `Principal ${i + 1} First Name`, path: `preQualification.principals.${i}.firstName` },
+          { label: `Principal ${i + 1} Last Name`, path: `preQualification.principals.${i}.lastName` },
+          { label: `Principal ${i + 1} Email`, path: `preQualification.principals.${i}.email` },
+          { label: `Principal ${i + 1} Phone`, path: `preQualification.principals.${i}.phone` },
+          { label: `Principal ${i + 1} Title`, path: `preQualification.principals.${i}.title` },
+          { label: `Principal ${i + 1} Ownership %`, path: `preQualification.principals.${i}.ownershipPercent` },
+        );
+      }
+      return fields;
+    })(),
+    business: [
+      { label: 'Legal Name', path: 'businessProfile.legalName' },
+      { label: 'DBA', path: 'businessProfile.dba' },
+      { label: 'Structure', path: 'businessProfile.businessStructure' },
+      { label: 'Industry', path: 'businessProfile.industryType' },
+      { label: 'EIN', path: 'businessProfile.ein' },
+      { label: 'SSN', path: 'businessProfile.ssn' },
+      { label: 'Business Start Date', path: 'businessProfile.businessStartDate' },
+      { label: 'Street Address', path: 'businessProfile.streetAddress' },
+      { label: 'City', path: 'businessProfile.city' },
+      { label: 'State', path: 'businessProfile.state' },
+      { label: 'ZIP', path: 'businessProfile.zip' },
+      { label: 'Phone', path: 'businessProfile.phoneNumber' },
+      { label: 'Website', path: 'businessProfile.websiteUrl' },
+    ],
+    processing: [
+      { label: 'Monthly Volume', path: 'processingProfile.monthlyVolume' },
+      { label: 'Average Ticket', path: 'processingProfile.averageTicket' },
+      { label: 'High Ticket', path: 'processingProfile.highTicket' },
+      { label: 'Card Present %', path: 'processingProfile.cardPresentPercent' },
+      { label: 'Card Not Present %', path: 'processingProfile.cardNotPresentPercent' },
+      { label: 'E-Commerce %', path: 'processingProfile.ecommercePercent' },
+      { label: 'Mail Order %', path: 'processingProfile.mailOrderPercent' },
+      { label: 'Phone Order %', path: 'processingProfile.phoneOrderPercent' },
+      { label: 'Refund Policy URL', path: 'processingProfile.refundPolicyUrl' },
+    ],
+    ach: [
+      { label: 'Accepts ACH', path: 'processingProfile.acceptsAch' },
+      { label: 'ACH Monthly Volume', path: 'processingProfile.achMonthlyVolume' },
+      { label: 'ACH Average Ticket', path: 'processingProfile.achAverageTicket' },
+      { label: 'ACH High Ticket', path: 'processingProfile.achHighTicket' },
+      { label: 'ACH Current Provider', path: 'processingProfile.achCurrentProvider' },
+    ],
+    banking: [
+      { label: 'Bank Name', path: 'banking.bankName' },
+      { label: 'Account Type', path: 'banking.accountType' },
+      { label: 'Routing #', path: 'banking.routingNumber' },
+      { label: 'Account #', path: 'banking.accountNumber' },
+    ],
+  };
+
+  const getChangedFields = (): string[] => {
+    if (!selected || !editData || !editingSection) return [];
+    const fields = SECTION_FIELDS[editingSection] || [];
+    return fields
+      .filter((f) => {
+        const orig = getFieldValue(selected.data, f.path);
+        const curr = getFieldValue(editData, f.path);
+        return String(orig ?? '') !== String(curr ?? '');
+      })
+      .map((f) => f.label);
+  };
+
+  const isFieldChanged = (path: string): boolean => {
+    if (!selected || !editData) return false;
+    const orig = getFieldValue(selected.data, path);
+    const curr = getFieldValue(editData, path);
+    return String(orig ?? '') !== String(curr ?? '');
+  };
+
   const tabs = [
     { id: 'preQual', label: 'Pre-App', icon: Users },
     { id: 'business', label: 'Business', icon: Building2 },
@@ -235,14 +332,32 @@ const ApplicationsPage = () => {
     let val: any = editData;
     for (const k of keys) val = val?.[k];
 
+    const changed = isFieldChanged(path);
+    const shakeClass = shakeFields && changed ? 'animate-shake border-destructive ring-1 ring-destructive/30' : '';
+    const changedClass = changed ? 'border-warning/50 ring-1 ring-warning/20' : '';
+
+    const resetBtn = changed && (
+      <button
+        type="button"
+        onClick={() => resetField(path)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+        title="Reset to original"
+      >
+        <Undo2 className="w-3.5 h-3.5" />
+      </button>
+    );
+
     if (options) {
       return (
         <div>
           <label className="field-label">{label}</label>
-          <select className="field-input" value={val || ''} onChange={(e) => updateField(path, e.target.value)}>
-            <option value="">Select...</option>
-            {options.map((o) => <option key={o} value={o}>{o}</option>)}
-          </select>
+          <div className="relative">
+            <select className={`field-input ${changedClass} ${shakeClass} ${changed ? 'pr-8' : ''}`} value={val || ''} onChange={(e) => updateField(path, e.target.value)}>
+              <option value="">Select...</option>
+              {options.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+            {resetBtn}
+          </div>
         </div>
       );
     }
@@ -250,15 +365,18 @@ const ApplicationsPage = () => {
     return (
       <div>
         <label className="field-label">{label}</label>
-        <input
-          type={type}
-          className="field-input"
-          value={val ?? ''}
-          onChange={(e) => {
-            const v = type === 'number' ? (e.target.value ? Number(e.target.value) : '') : e.target.value;
-            updateField(path, type === 'tel' ? formatPhone(e.target.value) : v);
-          }}
-        />
+        <div className="relative">
+          <input
+            type={type}
+            className={`field-input ${changedClass} ${shakeClass} ${changed ? 'pr-8' : ''}`}
+            value={val ?? ''}
+            onChange={(e) => {
+              const v = type === 'number' ? (e.target.value ? Number(e.target.value) : '') : e.target.value;
+              updateField(path, type === 'tel' ? formatPhone(e.target.value) : v);
+            }}
+          />
+          {resetBtn}
+        </div>
       </div>
     );
   };
