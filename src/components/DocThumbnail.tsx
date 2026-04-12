@@ -13,8 +13,9 @@ const truncateName = (name: string, maxLen = 24): string => {
   return base.slice(0, Math.max(keep, 6)) + '...' + ext;
 };
 
-const isImage = (file: File) => file.type.startsWith('image/');
-const isPdf = (file: File) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+const isRealFile = (file: unknown): file is File => file instanceof File;
+const isImage = (file: File) => file.type?.startsWith('image/');
+const isPdf = (file: File) => file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf');
 
 const PdfPreview = ({ file }: { file: File }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,10 +55,26 @@ const PdfPreview = ({ file }: { file: File }) => {
 };
 
 const DocThumbnail = ({ file }: { file: File }) => {
+  const real = isRealFile(file);
+
   const previewUrl = useMemo(() => {
-    if (isImage(file)) return URL.createObjectURL(file);
+    if (real && isImage(file)) return URL.createObjectURL(file);
     return null;
-  }, [file]);
+  }, [file, real]);
+
+  // Guard: if file was deserialized from JSON it won't be a real File
+  if (!real) {
+    return (
+      <div className="rounded border border-border overflow-hidden bg-secondary w-full">
+        <div className="aspect-[4/3] flex items-center justify-center overflow-hidden">
+          <FileText className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <div className="px-2 py-1 bg-card border-t border-border">
+          <p className="text-[10px] text-muted-foreground truncate">File unavailable</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded border border-border overflow-hidden bg-secondary w-full">
