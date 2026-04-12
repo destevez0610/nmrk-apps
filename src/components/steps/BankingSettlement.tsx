@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { Upload, X } from 'lucide-react';
+import { scrollToFirstError } from '@/lib/scrollToError';
 
 interface Props {
   onNext: () => void;
@@ -27,6 +28,7 @@ const BankingSettlement = ({ onNext, onPrev }: Props) => {
     if (!bk.accountNumber.trim()) e.accountNumber = 'Required';
     if (!bk.voidedCheckFile) e.file = 'Voided check or bank letter required';
     setErrors(e);
+    if (Object.keys(e).length > 0) scrollToFirstError();
     return Object.keys(e).length === 0;
   };
 

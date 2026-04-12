@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { Upload, X, FileText } from 'lucide-react';
+import { scrollToFirstError } from '@/lib/scrollToError';
 
 interface Props {
   onNext: () => void;
@@ -64,6 +65,7 @@ const DocumentUpload = ({ onNext, onPrev }: Props) => {
       e.statements = 'At least 3 months of bank statements required for volume > $25k';
     }
     setErrors(e);
+    if (Object.keys(e).length > 0) scrollToFirstError();
     return Object.keys(e).length === 0;
   };
 
