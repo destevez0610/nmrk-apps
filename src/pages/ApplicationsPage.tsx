@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { StoredApplication, MerchantApplication, CURRENT_PROVIDERS } from '@/types/application';
+import { StoredApplication, MerchantApplication, CURRENT_PROVIDERS, PUSH_PROVIDERS } from '@/types/application';
 import { getApplications, saveApplication } from '@/lib/applicationsStore';
 import { getActivityLog, addActivityEvent } from '@/lib/activityStore';
 import { formatPhone } from '@/lib/formatPhone';
@@ -679,7 +679,17 @@ const ApplicationsPage = () => {
               <h3 className="text-base font-bold text-foreground">Activity Trail</h3>
             </div>
             <div className="pl-10">
-              <ActivityTrail events={getActivityLog(selected!.id)} />
+              <ActivityTrail
+                events={getActivityLog(selected!.id)}
+                onAddNote={(note) => {
+                  addActivityEvent(selected!.id, 'note', 'Note added', note);
+                  // Re-select to refresh
+                  const freshApps = getApplications();
+                  const freshApp = freshApps.find((a) => a.id === selected!.id);
+                  if (freshApp) setSelected(freshApp);
+                  refresh();
+                }}
+              />
             </div>
           </section>
         )}
@@ -839,12 +849,34 @@ const ApplicationsPage = () => {
                   <h2 className="text-lg font-bold text-foreground">
                     {selected.data.preQualification.companyName || 'Application'}
                   </h2>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_LABELS[selected.status]?.color}`}>
                       {STATUS_LABELS[selected.status]?.label}
                     </span>
                     {selected.confirmationId && (
                       <span className="text-xs text-muted-foreground font-mono">{selected.confirmationId}</span>
+                    )}
+                    {/* Push status badges */}
+                    {selected.pushHistory && selected.pushHistory.length > 0 && (
+                      <>
+                        {(() => {
+                          // Show latest status per provider
+                          const latest = new Map<string, typeof selected.pushHistory[0]>();
+                          selected.pushHistory.forEach((r) => latest.set(r.provider, r));
+                          return Array.from(latest.values()).map((r) => {
+                            const prov = PUSH_PROVIDERS.find((p) => p.id === r.provider);
+                            const statusColor =
+                              r.status === 'pending' ? 'bg-warning/10 text-warning' :
+                              r.status === 'accepted' ? 'bg-accent/10 text-accent' :
+                              'bg-destructive/10 text-destructive';
+                            return (
+                              <span key={r.provider} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
+                                {prov?.name}: {r.status}
+                              </span>
+                            );
+                          });
+                        })()}
+                      </>
                     )}
                   </div>
                 </div>
