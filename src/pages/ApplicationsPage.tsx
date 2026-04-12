@@ -591,6 +591,10 @@ const ApplicationsPage = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <EditField label="Ownership %" path={`owners.${i}.ownershipPercent`} type="number" />
+                        <EditField label="DOB" path={`owners.${i}.dob`} type="date" />
+                        <EditField label="SSN" path={`owners.${i}.ssn`} />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <EditField label="Email" path={`owners.${i}.email`} />
                         <EditField label="Phone" path={`owners.${i}.phone`} type="tel" />
                       </div>
@@ -610,6 +614,10 @@ const ApplicationsPage = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <ReadOnlyField label="Ownership %" value={`${o.ownershipPercent}%`} />
+                        <ReadOnlyField label="Date of Birth" value={o.dob} />
+                        <ReadOnlyField label="SSN" value={o.ssn ? `***-**-${o.ssn.replace(/\D/g, '').slice(-4)}` : '—'} />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <ReadOnlyField label="Email" value={o.email} />
                         <ReadOnlyField label="Phone" value={o.phone} />
                       </div>
