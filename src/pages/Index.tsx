@@ -130,14 +130,6 @@ const WizardContent = () => {
               <ClipboardList className="w-3.5 h-3.5" />
               Applications
             </Link>
-            onClick={handleManualSave}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
-              saveFlash
-                ? 'bg-accent/10 text-accent'
-                : 'bg-secondary text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Save className="w-3.5 h-3.5" />
             <button
               onClick={handleManualSave}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
