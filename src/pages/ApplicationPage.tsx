@@ -120,7 +120,7 @@ const ApplicationContent = () => {
     <OwnershipPrincipals key={2} onNext={goNext} onPrev={goPrev} />,
     <BankingSettlement key={3} onNext={goNext} onPrev={goPrev} />,
     <DocumentUpload key={4} onNext={goNext} onPrev={goPrev} />,
-    <ReviewSubmit key={5} onPrev={goPrev} onGoToStep={goToStep} />,
+    <ReviewSubmit key={5} onPrev={goPrev} onGoToStep={goToStep} onSaveAndGoToStep={saveAndGoToStep} />,
   ];
 
   return (
