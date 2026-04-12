@@ -65,6 +65,13 @@ const ApplicationContent = () => {
     setTimeout(() => setSaveFlash(false), 2000);
   };
 
+  const goToStep = (stepIndex: number) => {
+    setDirection(stepIndex > currentStep ? 1 : -1);
+    setCurrentStep(stepIndex);
+    navigate(`/application/${stepIndex + 1}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const goNext = () => {
     setDirection(1);
     const next = currentStep + 1;
@@ -108,7 +115,7 @@ const ApplicationContent = () => {
     <OwnershipPrincipals key={2} onNext={goNext} onPrev={goPrev} />,
     <BankingSettlement key={3} onNext={goNext} onPrev={goPrev} />,
     <DocumentUpload key={4} onNext={goNext} onPrev={goPrev} />,
-    <ReviewSubmit key={5} onPrev={goPrev} />,
+    <ReviewSubmit key={5} onPrev={goPrev} onGoToStep={goToStep} />,
   ];
 
   return (
