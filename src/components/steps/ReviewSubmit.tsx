@@ -121,7 +121,7 @@ const ReviewSubmit = ({ onPrev, onGoToStep }: Props) => {
         {onGoToStep && (
           <button
             type="button"
-            onClick={() => onGoToStep(stepIndex)}
+            onClick={() => setEditTarget(stepIndex)}
             className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
           >
             <Pencil className="w-3 h-3" />
