@@ -814,7 +814,23 @@ const ApplicationsPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Unsaved changes dialog */}
+      {/* Push App Modal */}
+      {selected && (
+        <PushAppModal
+          open={pushModalOpen}
+          onClose={() => setPushModalOpen(false)}
+          app={selected}
+          onPushComplete={() => {
+            refresh();
+            // Re-select to get fresh data
+            const freshApps = getApplications();
+            const freshApp = freshApps.find((a) => a.id === selected.id);
+            if (freshApp) setSelected(freshApp);
+          }}
+        />
+      )}
+
+
       <AlertDialog open={unsavedDialog !== null} onOpenChange={(open) => !open && setUnsavedDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
