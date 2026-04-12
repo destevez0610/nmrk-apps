@@ -277,10 +277,11 @@ const ApplicationsPage = () => {
   const renderModalContent = () => {
     if (!selected) return null;
     const d = editingSection ? editData! : selected.data;
-    const pq = d.preQualification;
-    const bp = d.businessProfile;
-    const pp = d.processingProfile;
-    const bk = d.banking;
+    const pq = d.preQualification || {} as any;
+    const bp = d.businessProfile || {} as any;
+    const pp = d.processingProfile || {} as any;
+    const bk = d.banking || {} as any;
+    const docs = d.documents || {} as any;
     const isEditing = (section: string) => editingSection === section;
 
     return (
@@ -687,16 +688,16 @@ const ApplicationsPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="field-label">Front</label>
-                    {d.documents.driversLicenseFront ? (
-                      <DocThumbnail file={d.documents.driversLicenseFront} />
+                    {docs.driversLicenseFront ? (
+                      <DocThumbnail file={docs.driversLicenseFront} />
                     ) : (
                       <ReadOnlyField label="" value="Not uploaded" />
                     )}
                   </div>
                   <div>
                     <label className="field-label">Back</label>
-                    {d.documents.driversLicenseBack ? (
-                      <DocThumbnail file={d.documents.driversLicenseBack} />
+                    {docs.driversLicenseBack ? (
+                      <DocThumbnail file={docs.driversLicenseBack} />
                     ) : (
                       <ReadOnlyField label="" value="Not uploaded" />
                     )}
@@ -705,9 +706,9 @@ const ApplicationsPage = () => {
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
-                {d.documents.bankStatements.length > 0 ? (
+                {(docs.bankStatements || []).length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {d.documents.bankStatements.map((f, i) => (
+                    {(docs.bankStatements || []).map((f: File, i: number) => (
                       <div key={i}>
                         <label className="field-label">Statement {i + 1}</label>
                         <DocThumbnail file={f} />
