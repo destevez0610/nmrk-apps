@@ -90,6 +90,44 @@ export interface MerchantApplication {
   documents: DocumentsData;
 }
 
+export type ActivityEventType =
+  | 'created'
+  | 'edited'
+  | 'status_change'
+  | 'pushed'
+  | 'push_response'
+  | 'push_error'
+  | 'note'
+  | 'resend';
+
+export interface ActivityEvent {
+  id: string;
+  timestamp: string;
+  type: ActivityEventType;
+  title: string;
+  detail?: string;
+  provider?: string;
+  meta?: Record<string, unknown>;
+}
+
+export const PUSH_PROVIDERS = [
+  { id: 'maverick', name: 'Maverick Payments', description: 'Primary processing partner' },
+  { id: 'nmi', name: 'NMI', description: 'Network Merchants gateway' },
+  { id: 'magnify', name: 'Magnify', description: 'Magnify payment solutions' },
+  { id: 'payment_cloud', name: 'Payment Cloud', description: 'Payment Cloud processing' },
+] as const;
+
+export type PushProviderId = (typeof PUSH_PROVIDERS)[number]['id'];
+
+export interface PushRecord {
+  id: string;
+  provider: PushProviderId;
+  pushedAt: string;
+  status: 'pending' | 'accepted' | 'declined' | 'error';
+  externalRef?: string;
+  responseMessage?: string;
+}
+
 /** Stored application record (for the applications page) */
 export interface StoredApplication {
   id: string;
@@ -99,6 +137,8 @@ export interface StoredApplication {
   data: MerchantApplication;
   confirmationId?: string;
   failReason?: string;
+  activityLog?: ActivityEvent[];
+  pushHistory?: PushRecord[];
 }
 
 export const initialApplication: MerchantApplication = {
