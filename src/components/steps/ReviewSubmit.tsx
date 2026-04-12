@@ -343,6 +343,8 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
             sectionNumber={3}
             stepIndex={2}
             onEdit={editHandler}
+            open={openSections[3]}
+            onToggle={toggleSection(3)}
             rightContent={
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${totalOwnership === 100 ? 'bg-accent/10 text-accent' : 'bg-warning/10 text-warning'}`}>
                 {totalOwnership}% / 100%

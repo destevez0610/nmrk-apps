@@ -588,9 +588,43 @@ const ApplicationsPage = () => {
           <section>
             <SectionHeader title="Supporting Documents" sectionNumber={1} editing={false} onStartEdit={() => {}} onSave={() => {}} onCancel={() => {}} />
             <div className="space-y-4 pl-10">
-              <ReadOnlyField label="ID Front" value={d.documents.driversLicenseFront ? 'Uploaded' : 'Not uploaded'} />
-              <ReadOnlyField label="ID Back" value={d.documents.driversLicenseBack ? 'Uploaded' : 'Not uploaded'} />
-              <ReadOnlyField label="Bank Statements" value={`${d.documents.bankStatements.length} file(s)`} />
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3">Driver's License / Government ID</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="field-label">Front</label>
+                    {d.documents.driversLicenseFront ? (
+                      <DocThumbnail file={d.documents.driversLicenseFront} frosted />
+                    ) : (
+                      <ReadOnlyField label="" value="Not uploaded" />
+                    )}
+                  </div>
+                  <div>
+                    <label className="field-label">Back</label>
+                    {d.documents.driversLicenseBack ? (
+                      <DocThumbnail file={d.documents.driversLicenseBack} frosted />
+                    ) : (
+                      <ReadOnlyField label="" value="Not uploaded" />
+                    )}
+                  </div>
+                </div>
+              </div>
+              {d.documents.bankStatements.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Bank Statements</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {d.documents.bankStatements.map((f, i) => (
+                      <div key={i}>
+                        <label className="field-label">Statement {i + 1}</label>
+                        <DocThumbnail file={f} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!d.documents.driversLicenseFront && !d.documents.driversLicenseBack && d.documents.bankStatements.length === 0 && (
+                <p className="text-sm text-muted-foreground">No documents uploaded.</p>
+              )}
             </div>
           </section>
         )}
