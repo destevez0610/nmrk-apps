@@ -907,8 +907,18 @@ const ApplicationsPage = () => {
                               r.status === 'accepted' ? 'bg-accent/10 text-accent' :
                               'bg-destructive/10 text-destructive';
                             return (
-                              <span key={r.provider} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
+                              <span key={r.provider} className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
                                 {prov?.name}: {r.status}
+                                {(r.status === 'error' || r.status === 'declined') && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleResend(r.provider); }}
+                                    className="ml-0.5 hover:opacity-70"
+                                    title="Resend"
+                                    disabled={resending === r.provider}
+                                  >
+                                    <RotateCw className={`w-2.5 h-2.5 ${resending === r.provider ? 'animate-spin' : ''}`} />
+                                  </button>
+                                )}
                               </span>
                             );
                           });
