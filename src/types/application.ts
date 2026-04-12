@@ -49,6 +49,12 @@ export interface ProcessingProfileData {
   ecommercePercent: number;
   mailOrderPercent: number;
   phoneOrderPercent: number;
+  // ACH
+  acceptsAch: boolean;
+  achMonthlyVolume: number | '';
+  achAverageTicket: number | '';
+  achHighTicket: number | '';
+  achCurrentProvider: string;
 }
 
 export interface OwnerData {
@@ -191,6 +197,11 @@ export const initialApplication: MerchantApplication = {
     ecommercePercent: 0,
     mailOrderPercent: 0,
     phoneOrderPercent: 0,
+    acceptsAch: false,
+    achMonthlyVolume: '',
+    achAverageTicket: '',
+    achHighTicket: '',
+    achCurrentProvider: '',
   },
   owners: [
     {
