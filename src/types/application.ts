@@ -113,6 +113,7 @@ export interface ActivityEvent {
   title: string;
   detail?: string;
   provider?: string;
+  author?: string;
   meta?: Record<string, unknown>;
 }
 

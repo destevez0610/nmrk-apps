@@ -883,8 +883,8 @@ const ApplicationsPage = () => {
             <div className="">
               <ActivityTrail
                 events={getActivityLog(selected!.id)}
-                onAddNote={(note) => {
-                  addActivityEvent(selected!.id, 'note', 'Note added', note);
+                onAddNote={(note, author) => {
+                  addActivityEvent(selected!.id, 'note', 'Note added', note, undefined, undefined, author);
                   const freshApps = getApplications();
                   const freshApp = freshApps.find((a) => a.id === selected!.id);
                   if (freshApp) setSelected(freshApp);
