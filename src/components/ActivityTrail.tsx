@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityEvent, PushProviderId } from '@/types/application';
-import { Send, Edit, AlertCircle, CheckCircle2, MessageSquare, RotateCw, PlusCircle, ArrowRightLeft, SendHorizonal } from 'lucide-react';
+import { Send, Edit, AlertCircle, CheckCircle2, MessageSquare, RotateCw, PlusCircle, ArrowRightLeft, SendHorizonal, User } from 'lucide-react';
 
 const EVENT_CONFIG: Record<string, { icon: typeof Send; color: string }> = {
   created: { icon: PlusCircle, color: 'text-primary' },
@@ -15,39 +15,53 @@ const EVENT_CONFIG: Record<string, { icon: typeof Send; color: string }> = {
 
 interface Props {
   events: ActivityEvent[];
-  onAddNote?: (note: string) => void;
+  onAddNote?: (note: string, author: string) => void;
   onResend?: (providerId: PushProviderId) => void;
 }
 
 const ActivityTrail = ({ events, onAddNote, onResend }: Props) => {
   const [noteText, setNoteText] = useState('');
+  const [authorName, setAuthorName] = useState('');
 
   const handleSubmitNote = () => {
     const trimmed = noteText.trim();
-    if (!trimmed || !onAddNote) return;
-    onAddNote(trimmed);
+    const author = authorName.trim();
+    if (!trimmed || !author || !onAddNote) return;
+    onAddNote(trimmed, author);
     setNoteText('');
   };
 
   return (
     <div className="space-y-4">
       {onAddNote && (
-        <div className="flex gap-2">
-          <input
-            type="text"
-            className="field-input flex-1"
-            placeholder="Add a note..."
-            value={noteText}
-            onChange={(e) => setNoteText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmitNote()}
-          />
-          <button
-            onClick={handleSubmitNote}
-            disabled={!noteText.trim()}
-            className="btn-primary px-3 py-2 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <SendHorizonal className="w-3.5 h-3.5" />
-          </button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <div className="relative flex-shrink-0 w-[140px]">
+              <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                type="text"
+                className="field-input w-full pl-8 text-sm"
+                placeholder="Your name"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+              />
+            </div>
+            <input
+              type="text"
+              className="field-input flex-1"
+              placeholder="Add a note..."
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmitNote()}
+            />
+            <button
+              onClick={handleSubmitNote}
+              disabled={!noteText.trim() || !authorName.trim()}
+              className="btn-primary px-3 py-2 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <SendHorizonal className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -86,6 +100,12 @@ const ActivityTrail = ({ events, onAddNote, onResend }: Props) => {
                       <p className="text-xs text-muted-foreground mt-0.5">{event.detail}</p>
                     )}
                     <div className="flex items-center gap-2 mt-1">
+                      {event.author && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          <User className="w-2.5 h-2.5" />
+                          {event.author}
+                        </span>
+                      )}
                       {event.provider && (
                         <span className="inline-block text-[10px] font-medium text-primary bg-primary/5 px-1.5 py-0.5 rounded">
                           {event.provider}
