@@ -3,6 +3,8 @@ import { useApplication } from '@/context/ApplicationContext';
 import { OwnerData, US_STATES, CANADIAN_PROVINCES } from '@/types/application';
 import { formatPhone } from '@/lib/formatPhone';
 import { formatSsn } from '@/lib/formatSsn';
+import { formatZip } from '@/lib/formatZip';
+import { scrollToFirstError } from '@/lib/scrollToError';
 import { Plus, Trash2, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -77,6 +79,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
     });
     if (totalOwnership !== 100) e.total = 'Total ownership must equal 100%';
     setErrors(e);
+    if (Object.keys(e).length > 0) scrollToFirstError();
     return Object.keys(e).length === 0;
   };
 
@@ -189,7 +192,7 @@ const OwnershipPrincipals = ({ onNext, onPrev }: Props) => {
                 {errors[`${idx}.state`] && <p className="field-error">{errors[`${idx}.state`]}</p>}
               </div>
               <div>
-                <input className="field-input" placeholder="ZIP" value={owner.zip} onChange={(e) => updateOwner(owner.id, { zip: e.target.value })} />
+                <input className="field-input" placeholder="ZIP" maxLength={10} value={owner.zip} onChange={(e) => updateOwner(owner.id, { zip: formatZip(e.target.value) })} />
                 {errors[`${idx}.zip`] && <p className="field-error">{errors[`${idx}.zip`]}</p>}
               </div>
             </div>
