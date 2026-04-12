@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Loader2, Pencil, FileText, Save } from 'lucide-react';
+import { CheckCircle2, Loader2, Pencil, FileText, Save, Printer } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -167,9 +167,19 @@ const ReviewSubmit = ({ onPrev, onGoToStep, onSaveAndGoToStep }: Props) => {
               <h2 className="text-lg font-bold text-foreground tracking-tight">Merchant Application</h2>
               <p className="text-[11px] text-muted-foreground mt-0.5">Maverick Payments — Application for Review</p>
             </div>
-            <div className="text-right">
-              <p className="text-[11px] text-muted-foreground">Date</p>
-              <p className="text-xs font-medium text-foreground">{today}</p>
+            <div className="flex items-start gap-4">
+              <div className="text-right">
+                <p className="text-[11px] text-muted-foreground">Date</p>
+                <p className="text-xs font-medium text-foreground">{today}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-secondary text-muted-foreground hover:text-foreground transition-colors print:hidden"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Print / PDF
+              </button>
             </div>
           </div>
         </div>

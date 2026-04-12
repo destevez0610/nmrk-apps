@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ApplicationProvider, useApplication } from '@/context/ApplicationContext';
 import ProgressBar from '@/components/ProgressBar';
@@ -9,9 +9,9 @@ import OwnershipPrincipals from '@/components/steps/OwnershipPrincipals';
 import BankingSettlement from '@/components/steps/BankingSettlement';
 import DocumentUpload from '@/components/steps/DocumentUpload';
 import ReviewSubmit from '@/components/steps/ReviewSubmit';
+import SectionChecklist from '@/components/SectionChecklist';
 import { useAutoSave, loadDraft, clearDraft } from '@/hooks/useAutoSave';
 import { Save, ClipboardList } from 'lucide-react';
-import { useState } from 'react';
 
 const STEP_LABELS = [
   'Business Profile',
@@ -125,7 +125,7 @@ const ApplicationContent = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-foreground tracking-tight">Merchant Application</h1>
@@ -152,10 +152,23 @@ const ApplicationContent = () => {
             </button>
           </div>
         </div>
-        <ProgressBar currentStep={currentStep} totalSteps={STEP_LABELS.length} stepLabels={STEP_LABELS} />
-        <StepWrapper stepKey={currentStep} direction={direction}>
-          {steps[currentStep]}
-        </StepWrapper>
+
+        <div className="flex gap-6">
+          {/* Main content */}
+          <div className="flex-1 min-w-0 max-w-2xl">
+            <ProgressBar currentStep={currentStep} totalSteps={STEP_LABELS.length} stepLabels={STEP_LABELS} />
+            <StepWrapper stepKey={currentStep} direction={direction}>
+              {steps[currentStep]}
+            </StepWrapper>
+          </div>
+
+          {/* Sidebar checklist — hidden on mobile */}
+          <div className="hidden lg:block w-52 shrink-0 print:hidden">
+            <div className="sticky top-8">
+              <SectionChecklist currentStep={currentStep} onGoToStep={goToStep} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

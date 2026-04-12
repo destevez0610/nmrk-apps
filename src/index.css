@@ -122,3 +122,11 @@
     @apply bg-accent text-accent-foreground px-6 py-2.5 rounded-lg font-medium text-sm hover:opacity-90 transition-all duration-200;
   }
 }
+
+@media print {
+  body { background: white !important; }
+  .print\:hidden, nav, header, .btn-secondary, .btn-accent, .btn-primary { display: none !important; }
+  .bg-card { box-shadow: none !important; border: none !important; }
+  .blur-\[6px\] { filter: none !important; }
+  .backdrop-blur-\[2px\] { backdrop-filter: none !important; background: transparent !important; }
+}
