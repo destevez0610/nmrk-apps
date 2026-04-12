@@ -5,10 +5,14 @@ import { formatPhone } from '@/lib/formatPhone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search, X, Eye, Pencil, Check, ArrowLeft,
+  Search, X, Pencil, Check, ArrowLeft,
   Building2, Users, CreditCard, Landmark, FileText,
-  ArrowUpDown, Filter,
+  ArrowUpDown, Filter, Save,
 } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   'pre-qual': { label: 'Pre-Qualified', color: 'bg-primary/10 text-primary' },
@@ -27,14 +31,69 @@ const TITLES = [
 type SortField = 'date' | 'company' | 'volume' | 'status';
 type SortDir = 'asc' | 'desc';
 
+/** Read-only field styled like a filled form input */
+const ReadOnlyField = ({ label, value, optional }: { label: string; value: string | number | undefined | null; optional?: boolean }) => (
+  <div>
+    <label className="field-label">
+      {label}
+      {optional && <span className="text-xs font-normal text-muted-foreground ml-1">(Optional)</span>}
+    </label>
+    <div className="field-input bg-secondary/50 cursor-default text-foreground text-sm">
+      {value || '—'}
+    </div>
+  </div>
+);
+
+const SectionHeader = ({
+  title,
+  sectionNumber,
+  editing,
+  onStartEdit,
+  onSave,
+  onCancel,
+}: {
+  title: string;
+  sectionNumber: number;
+  editing: boolean;
+  onStartEdit: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) => (
+  <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center gap-3">
+      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold">
+        {sectionNumber}
+      </span>
+      <h3 className="text-base font-bold text-foreground">{title}</h3>
+    </div>
+    {editing ? (
+      <div className="flex items-center gap-2">
+        <button onClick={onCancel} className="btn-secondary text-xs px-3 py-1.5">Cancel</button>
+        <button onClick={onSave} className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1">
+          <Check className="w-3.5 h-3.5" /> Save
+        </button>
+      </div>
+    ) : (
+      <button
+        onClick={onStartEdit}
+        className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors font-medium px-2.5 py-1.5 rounded-lg bg-primary/5 hover:bg-primary/10"
+      >
+        <Pencil className="w-3 h-3" />
+        Edit
+      </button>
+    )}
+  </div>
+);
+
 const ApplicationsPage = () => {
   const navigate = useNavigate();
   const [apps, setApps] = useState<StoredApplication[]>([]);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<StoredApplication | null>(null);
-  const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<MerchantApplication | null>(null);
+  const [editingSection, setEditingSection] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('preQual');
+  const [unsavedDialog, setUnsavedDialog] = useState<{ action: () => void } | null>(null);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -99,28 +158,50 @@ const ApplicationsPage = () => {
 
   const openApp = (app: StoredApplication) => {
     setSelected(app);
-    setEditing(false);
+    setEditingSection(null);
     setEditData(JSON.parse(JSON.stringify(app.data)));
     setActiveTab('preQual');
   };
 
-  const startEdit = () => {
-    setEditing(true);
+  const startSectionEdit = (section: string) => {
+    setEditingSection(section);
     setEditData(JSON.parse(JSON.stringify(selected!.data)));
   };
 
-  const saveEdit = () => {
+  const saveSectionEdit = () => {
     if (!selected || !editData) return;
     const updated = { ...selected, data: editData };
     saveApplication(updated);
     setSelected(updated);
-    setEditing(false);
+    setEditingSection(null);
     refresh();
   };
 
-  const cancelEdit = () => {
-    setEditing(false);
+  const cancelSectionEdit = () => {
+    setEditingSection(null);
     setEditData(JSON.parse(JSON.stringify(selected!.data)));
+  };
+
+  const guardedAction = (action: () => void) => {
+    if (editingSection) {
+      setUnsavedDialog({ action });
+    } else {
+      action();
+    }
+  };
+
+  const handleTabSwitch = (tabId: string) => {
+    guardedAction(() => {
+      setActiveTab(tabId);
+      setEditingSection(null);
+    });
+  };
+
+  const handleCloseModal = () => {
+    guardedAction(() => {
+      setSelected(null);
+      setEditingSection(null);
+    });
   };
 
   const updateField = (path: string, value: any) => {
@@ -144,13 +225,6 @@ const ApplicationsPage = () => {
     { id: 'documents', label: 'Documents', icon: FileText },
   ];
 
-  const Field = ({ label, value }: { label: string; value: string | number | undefined | null }) => (
-    <div className="flex justify-between py-2 border-b border-border/50 last:border-0">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-xs font-medium text-foreground text-right max-w-[60%]">{value || '—'}</span>
-    </div>
-  );
-
   const EditField = ({ label, path, type = 'text', options }: { label: string; path: string; type?: string; options?: string[] }) => {
     const keys = path.split('.');
     let val: any = editData;
@@ -158,7 +232,7 @@ const ApplicationsPage = () => {
 
     if (options) {
       return (
-        <div className="space-y-1">
+        <div>
           <label className="field-label">{label}</label>
           <select className="field-input" value={val || ''} onChange={(e) => updateField(path, e.target.value)}>
             <option value="">Select...</option>
@@ -169,7 +243,7 @@ const ApplicationsPage = () => {
     }
 
     return (
-      <div className="space-y-1">
+      <div>
         <label className="field-label">{label}</label>
         <input
           type={type}
@@ -198,190 +272,322 @@ const ApplicationsPage = () => {
 
   const renderModalContent = () => {
     if (!selected) return null;
-    const d = editing ? editData! : selected.data;
+    const d = editingSection ? editData! : selected.data;
     const pq = d.preQualification;
     const bp = d.businessProfile;
     const pp = d.processingProfile;
     const bk = d.banking;
+    const isEditing = (section: string) => editingSection === section;
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {activeTab === 'preQual' && (
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Pre-Qualification Details</h3>
-            {editing ? (
-              <div className="space-y-3">
-                <EditField label="Company Name" path="preQualification.companyName" />
-                <EditField label="Location" path="preQualification.location" options={['US', 'Canada', 'International']} />
-                <EditField label="Monthly Volume" path="preQualification.monthlyVolume" type="number" />
-                <EditField label="Average Ticket" path="preQualification.averageTicket" type="number" />
-                <EditField label="Current Provider" path="preQualification.currentProvider" options={CURRENT_PROVIDERS} />
+          <>
+            {/* Pre-Qual Details */}
+            <section>
+              <SectionHeader title="Pre-Qualification Details" sectionNumber={1} editing={isEditing('preQual')} onStartEdit={() => startSectionEdit('preQual')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
+              {isEditing('preQual') ? (
+                <div className="space-y-3 pl-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <EditField label="Company Name" path="preQualification.companyName" />
+                    <EditField label="Location" path="preQualification.location" options={['US', 'Canada', 'International']} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <EditField label="Monthly Volume" path="preQualification.monthlyVolume" type="number" />
+                    <EditField label="Average Ticket" path="preQualification.averageTicket" type="number" />
+                    <EditField label="Current Provider" path="preQualification.currentProvider" options={CURRENT_PROVIDERS} />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4 pl-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ReadOnlyField label="Company Name" value={pq.companyName} />
+                    <ReadOnlyField label="Location" value={pq.location} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <ReadOnlyField label="Monthly Volume" value={pq.monthlyVolume ? `$${Number(pq.monthlyVolume).toLocaleString()}` : ''} />
+                    <ReadOnlyField label="Average Ticket" value={pq.averageTicket ? `$${Number(pq.averageTicket).toLocaleString()}` : ''} />
+                    <ReadOnlyField label="Current Provider" value={pq.currentProvider} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ReadOnlyField label="Stripe Kickoff" value={pq.wasKickedOffStripe === true ? 'Yes' : pq.wasKickedOffStripe === false ? 'No' : '—'} />
+                    <ReadOnlyField label="Business Bank Account" value={pq.hasBusinessBankAccount === true ? 'Yes' : pq.hasBusinessBankAccount === false ? 'No' : '—'} />
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <div className="border-t border-border/40" />
+
+            {/* Principals */}
+            <section>
+              <SectionHeader title="Principals" sectionNumber={2} editing={isEditing('principals')} onStartEdit={() => startSectionEdit('principals')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
+              <div className="space-y-6 pl-10">
+                {pq.principals.map((p, i) => (
+                  <div key={p.id} className={`space-y-4 ${i > 0 ? 'pt-4 border-t border-dashed border-border/50' : ''}`}>
+                    <h4 className="text-sm font-semibold text-foreground">{i === 0 ? 'Primary Principal' : `Principal ${i + 1}`}</h4>
+                    {isEditing('principals') ? (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <EditField label="First Name" path={`preQualification.principals.${i}.firstName`} />
+                          <EditField label="Last Name" path={`preQualification.principals.${i}.lastName`} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <EditField label="Email" path={`preQualification.principals.${i}.email`} />
+                          <EditField label="Phone" path={`preQualification.principals.${i}.phone`} type="tel" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <EditField label="Title" path={`preQualification.principals.${i}.title`} options={TITLES} />
+                          <EditField label="Ownership %" path={`preQualification.principals.${i}.ownershipPercent`} type="number" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <ReadOnlyField label="First Name" value={p.firstName} />
+                          <ReadOnlyField label="Last Name" value={p.lastName} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <ReadOnlyField label="Email" value={p.email} />
+                          <ReadOnlyField label="Phone" value={p.phone} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <ReadOnlyField label="Title" value={p.title} />
+                          <ReadOnlyField label="Ownership %" value={`${p.ownershipPercent}%`} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            ) : (
+            </section>
+
+            {selected.failReason && (
               <>
-                <Field label="Company" value={pq.companyName} />
-                <Field label="Location" value={pq.location} />
-                <Field label="Monthly Volume" value={pq.monthlyVolume ? `$${Number(pq.monthlyVolume).toLocaleString()}` : ''} />
-                <Field label="Average Ticket" value={pq.averageTicket ? `$${Number(pq.averageTicket).toLocaleString()}` : ''} />
-                <Field label="Current Provider" value={pq.currentProvider} />
-                <Field label="Stripe Kickoff" value={pq.wasKickedOffStripe === true ? 'Yes' : pq.wasKickedOffStripe === false ? 'No' : '—'} />
-                <Field label="Bank Account" value={pq.hasBusinessBankAccount === true ? 'Yes' : pq.hasBusinessBankAccount === false ? 'No' : '—'} />
+                <div className="border-t border-border/40" />
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <p className="text-xs text-destructive font-medium">Fail Reason: {selected.failReason}</p>
+                </div>
               </>
             )}
-            <h4 className="text-sm font-semibold text-foreground mt-4">Principals</h4>
-            {pq.principals.map((p, i) => (
-              <div key={p.id} className="p-3 rounded-lg border border-border space-y-1">
-                <p className="text-xs font-semibold text-foreground">{i === 0 ? 'Primary' : `Principal ${i + 1}`}</p>
-                {editing ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <EditField label="First Name" path={`preQualification.principals.${i}.firstName`} />
-                      <EditField label="Last Name" path={`preQualification.principals.${i}.lastName`} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <EditField label="Email" path={`preQualification.principals.${i}.email`} />
-                      <EditField label="Phone" path={`preQualification.principals.${i}.phone`} type="tel" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <EditField label="Title" path={`preQualification.principals.${i}.title`} options={TITLES} />
-                      <EditField label="Ownership %" path={`preQualification.principals.${i}.ownershipPercent`} type="number" />
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <Field label="Name" value={`${p.firstName} ${p.lastName}`} />
-                    <Field label="Email" value={p.email} />
-                    <Field label="Phone" value={p.phone} />
-                    <Field label="Title" value={p.title} />
-                    <Field label="Ownership" value={`${p.ownershipPercent}%`} />
-                  </>
-                )}
-              </div>
-            ))}
-            {selected.failReason && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                <p className="text-xs text-destructive font-medium">Fail Reason: {selected.failReason}</p>
-              </div>
-            )}
-          </div>
+          </>
         )}
 
         {activeTab === 'business' && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Business Profile</h3>
-            {editing ? (
-              <div className="space-y-3">
-                <EditField label="Legal Name" path="businessProfile.legalName" />
-                <EditField label="DBA" path="businessProfile.dba" />
-                <EditField label="Structure" path="businessProfile.businessStructure" />
-                <EditField label="Industry" path="businessProfile.industryType" />
+          <section>
+            <SectionHeader title="Business Profile" sectionNumber={1} editing={isEditing('business')} onStartEdit={() => startSectionEdit('business')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
+            {isEditing('business') ? (
+              <div className="space-y-3 pl-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <EditField label="Legal Name" path="businessProfile.legalName" />
+                  <EditField label="DBA" path="businessProfile.dba" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <EditField label="Structure" path="businessProfile.businessStructure" />
+                  <EditField label="Industry" path="businessProfile.industryType" />
+                </div>
                 <EditField label="Street Address" path="businessProfile.streetAddress" />
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <EditField label="City" path="businessProfile.city" />
                   <EditField label="State" path="businessProfile.state" />
                   <EditField label="ZIP" path="businessProfile.zip" />
                 </div>
-                <EditField label="Phone" path="businessProfile.phoneNumber" type="tel" />
-                <EditField label="Website" path="businessProfile.websiteUrl" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <EditField label="Phone" path="businessProfile.phoneNumber" type="tel" />
+                  <EditField label="Website" path="businessProfile.websiteUrl" />
+                </div>
               </div>
             ) : (
-              <>
-                <Field label="Legal Name" value={bp.legalName} />
-                <Field label="DBA" value={bp.dba} />
-                <Field label="Structure" value={bp.businessStructure} />
-                <Field label="Industry" value={bp.industryType} />
-                <Field label="Address" value={bp.streetAddress ? `${bp.streetAddress}, ${bp.city}, ${bp.state} ${bp.zip}` : ''} />
-                <Field label="Phone" value={bp.phoneNumber} />
-                <Field label="Website" value={bp.websiteUrl} />
-              </>
+              <div className="space-y-4 pl-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ReadOnlyField label="Legal Business Name" value={bp.legalName} />
+                  <ReadOnlyField label="DBA (Doing Business As)" value={bp.dba} optional />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ReadOnlyField label="Business Structure" value={bp.businessStructure} />
+                  <ReadOnlyField label="Industry Type" value={bp.industryType} />
+                </div>
+                {bp.ein && <ReadOnlyField label="EIN (Employer ID)" value={bp.ein} />}
+                <div>
+                  <label className="field-label">Physical Business Address</label>
+                  <div className="field-input bg-secondary/50 cursor-default text-foreground mb-3">
+                    {bp.streetAddress || '—'}
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="field-input bg-secondary/50 cursor-default text-foreground">{bp.city || '—'}</div>
+                    <div className="field-input bg-secondary/50 cursor-default text-foreground">{bp.state || '—'}</div>
+                    <div className="field-input bg-secondary/50 cursor-default text-foreground">{bp.zip || '—'}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ReadOnlyField label="Business Phone" value={bp.phoneNumber} />
+                  <ReadOnlyField label="Website URL" value={bp.websiteUrl} optional />
+                </div>
+              </div>
             )}
-          </div>
+          </section>
         )}
 
         {activeTab === 'processing' && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Processing Profile</h3>
-            {editing ? (
-              <div className="space-y-3">
-                <EditField label="Monthly Volume" path="processingProfile.monthlyVolume" type="number" />
-                <EditField label="Avg Ticket" path="processingProfile.averageTicket" type="number" />
-                <EditField label="High Ticket" path="processingProfile.highTicket" type="number" />
-                <EditField label="Card Present %" path="processingProfile.cardPresentPercent" type="number" />
-                <EditField label="Card Not Present %" path="processingProfile.cardNotPresentPercent" type="number" />
+          <section>
+            <SectionHeader title="Processing Profile" sectionNumber={1} editing={isEditing('processing')} onStartEdit={() => startSectionEdit('processing')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
+            {isEditing('processing') ? (
+              <div className="space-y-3 pl-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <EditField label="Monthly Volume" path="processingProfile.monthlyVolume" type="number" />
+                  <EditField label="Avg Ticket" path="processingProfile.averageTicket" type="number" />
+                  <EditField label="High Ticket" path="processingProfile.highTicket" type="number" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <EditField label="Card Present %" path="processingProfile.cardPresentPercent" type="number" />
+                  <EditField label="Card Not Present %" path="processingProfile.cardNotPresentPercent" type="number" />
+                </div>
                 <EditField label="Refund Policy URL" path="processingProfile.refundPolicyUrl" />
               </div>
             ) : (
-              <>
-                <Field label="Monthly Volume" value={pp.monthlyVolume ? `$${Number(pp.monthlyVolume).toLocaleString()}` : ''} />
-                <Field label="Avg Ticket" value={pp.averageTicket ? `$${Number(pp.averageTicket).toLocaleString()}` : ''} />
-                <Field label="High Ticket" value={pp.highTicket ? `$${Number(pp.highTicket).toLocaleString()}` : ''} />
-                <Field label="Card Present" value={`${pp.cardPresentPercent}%`} />
-                <Field label="Card Not Present" value={`${pp.cardNotPresentPercent}%`} />
-                {pp.refundPolicyUrl && <Field label="Refund Policy" value={pp.refundPolicyUrl} />}
-              </>
+              <div className="space-y-4 pl-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <ReadOnlyField label="Monthly Volume" value={pp.monthlyVolume ? `$${Number(pp.monthlyVolume).toLocaleString()}` : ''} />
+                  <ReadOnlyField label="Average Ticket" value={pp.averageTicket ? `$${Number(pp.averageTicket).toLocaleString()}` : ''} />
+                  <ReadOnlyField label="High Ticket" value={pp.highTicket ? `$${Number(pp.highTicket).toLocaleString()}` : ''} />
+                </div>
+                <div>
+                  <label className="field-label">Transaction Split</label>
+                  <div className="grid grid-cols-2 gap-4 mt-1">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Card-Present %</label>
+                      <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.cardPresentPercent}%</div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Card-Not-Present %</label>
+                      <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.cardNotPresentPercent}%</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 rounded-full bg-secondary overflow-hidden flex">
+                    <div className="bg-primary transition-all duration-300" style={{ width: `${pp.cardPresentPercent}%` }} />
+                    <div className="bg-accent transition-all duration-300" style={{ width: `${pp.cardNotPresentPercent}%` }} />
+                  </div>
+                </div>
+                {pp.cardNotPresentPercent > 0 && (
+                  <div>
+                    <label className="field-label">Card-Not-Present Breakdown</label>
+                    <div className="grid grid-cols-3 gap-3 mt-1">
+                      <div>
+                        <label className="text-xs text-muted-foreground">E-Commerce %</label>
+                        <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.ecommercePercent}%</div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Mail Order %</label>
+                        <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.mailOrderPercent}%</div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Phone Order %</label>
+                        <div className="field-input bg-secondary/50 cursor-default text-foreground mt-1">{pp.phoneOrderPercent}%</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {pp.refundPolicyUrl && <ReadOnlyField label="Refund Policy URL" value={pp.refundPolicyUrl} />}
+              </div>
             )}
-          </div>
+          </section>
         )}
 
         {activeTab === 'ownership' && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Ownership & Principals</h3>
-            {d.owners.map((o, i) => (
-              <div key={o.id} className="p-3 rounded-lg border border-border">
-                {editing ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <EditField label="First Name" path={`owners.${i}.firstName`} />
-                      <EditField label="Last Name" path={`owners.${i}.lastName`} />
+          <section>
+            <SectionHeader title="Ownership & Principals" sectionNumber={1} editing={isEditing('ownership')} onStartEdit={() => startSectionEdit('ownership')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
+            <div className="space-y-6 pl-10">
+              {d.owners.map((o, i) => (
+                <div key={o.id} className={`space-y-4 ${i > 0 ? 'pt-4 border-t border-dashed border-border/50' : ''}`}>
+                  <h4 className="text-sm font-semibold text-foreground">Owner {i + 1}</h4>
+                  {isEditing('ownership') ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <EditField label="First Name" path={`owners.${i}.firstName`} />
+                        <EditField label="Last Name" path={`owners.${i}.lastName`} />
+                        <EditField label="Title" path={`owners.${i}.title`} options={TITLES} />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <EditField label="Ownership %" path={`owners.${i}.ownershipPercent`} type="number" />
+                        <EditField label="Email" path={`owners.${i}.email`} />
+                        <EditField label="Phone" path={`owners.${i}.phone`} type="tel" />
+                      </div>
+                      <EditField label="Street Address" path={`owners.${i}.streetAddress`} />
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <EditField label="City" path={`owners.${i}.city`} />
+                        <EditField label="State" path={`owners.${i}.state`} />
+                        <EditField label="ZIP" path={`owners.${i}.zip`} />
+                      </div>
                     </div>
-                    <EditField label="Title" path={`owners.${i}.title`} options={TITLES} />
-                    <EditField label="Ownership %" path={`owners.${i}.ownershipPercent`} type="number" />
-                    <EditField label="Email" path={`owners.${i}.email`} />
-                    <EditField label="Phone" path={`owners.${i}.phone`} type="tel" />
-                  </div>
-                ) : (
-                  <>
-                    <Field label={`Owner ${i + 1}`} value={`${o.firstName} ${o.lastName}`} />
-                    <Field label="Title" value={o.title} />
-                    <Field label="Ownership" value={`${o.ownershipPercent}%`} />
-                    <Field label="Email" value={o.email} />
-                    <Field label="Phone" value={o.phone} />
-                    <Field label="Address" value={o.streetAddress ? `${o.streetAddress}, ${o.city}, ${o.state} ${o.zip}` : ''} />
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <ReadOnlyField label="First Name" value={o.firstName} />
+                        <ReadOnlyField label="Last Name" value={o.lastName} />
+                        <ReadOnlyField label="Title" value={o.title} />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <ReadOnlyField label="Ownership %" value={`${o.ownershipPercent}%`} />
+                        <ReadOnlyField label="Email" value={o.email} />
+                        <ReadOnlyField label="Phone" value={o.phone} />
+                      </div>
+                      <div>
+                        <label className="field-label">Home Address</label>
+                        <div className="field-input bg-secondary/50 cursor-default text-foreground mb-3">
+                          {o.streetAddress || '—'}
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          <div className="field-input bg-secondary/50 cursor-default text-foreground">{o.city || '—'}</div>
+                          <div className="field-input bg-secondary/50 cursor-default text-foreground">{o.state || '—'}</div>
+                          <div className="field-input bg-secondary/50 cursor-default text-foreground">{o.zip || '—'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         {activeTab === 'banking' && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Banking & Settlement</h3>
-            {editing ? (
-              <div className="space-y-3">
-                <EditField label="Bank Name" path="banking.bankName" />
-                <EditField label="Routing #" path="banking.routingNumber" />
-                <EditField label="Account #" path="banking.accountNumber" />
-                <EditField label="Account Type" path="banking.accountType" options={['checking', 'savings']} />
+          <section>
+            <SectionHeader title="Banking & Settlement" sectionNumber={1} editing={isEditing('banking')} onStartEdit={() => startSectionEdit('banking')} onSave={saveSectionEdit} onCancel={cancelSectionEdit} />
+            {isEditing('banking') ? (
+              <div className="space-y-3 pl-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <EditField label="Bank Name" path="banking.bankName" />
+                  <EditField label="Account Type" path="banking.accountType" options={['checking', 'savings']} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <EditField label="Routing #" path="banking.routingNumber" />
+                  <EditField label="Account #" path="banking.accountNumber" />
+                </div>
               </div>
             ) : (
-              <>
-                <Field label="Bank" value={bk.bankName} />
-                <Field label="Account Type" value={bk.accountType} />
-                <Field label="Routing #" value={bk.routingNumber} />
-                <Field label="Account #" value={bk.accountNumber ? `****${bk.accountNumber.slice(-4)}` : ''} />
-              </>
+              <div className="space-y-4 pl-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ReadOnlyField label="Bank Name" value={bk.bankName} />
+                  <ReadOnlyField label="Account Type" value={bk.accountType} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ReadOnlyField label="Routing Number" value={bk.routingNumber} />
+                  <ReadOnlyField label="Account Number" value={bk.accountNumber ? `****${bk.accountNumber.slice(-4)}` : '—'} />
+                </div>
+              </div>
             )}
-          </div>
+          </section>
         )}
 
         {activeTab === 'documents' && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Documents</h3>
-            <Field label="ID Front" value={d.documents.driversLicenseFront ? 'Uploaded' : 'Not uploaded'} />
-            <Field label="ID Back" value={d.documents.driversLicenseBack ? 'Uploaded' : 'Not uploaded'} />
-            <Field label="Bank Statements" value={`${d.documents.bankStatements.length} file(s)`} />
-          </div>
+          <section>
+            <SectionHeader title="Supporting Documents" sectionNumber={1} editing={false} onStartEdit={() => {}} onSave={() => {}} onCancel={() => {}} />
+            <div className="space-y-4 pl-10">
+              <ReadOnlyField label="ID Front" value={d.documents.driversLicenseFront ? 'Uploaded' : 'Not uploaded'} />
+              <ReadOnlyField label="ID Back" value={d.documents.driversLicenseBack ? 'Uploaded' : 'Not uploaded'} />
+              <ReadOnlyField label="Bank Statements" value={`${d.documents.bankStatements.length} file(s)`} />
+            </div>
+          </section>
         )}
       </div>
     );
@@ -523,7 +729,7 @@ const ApplicationsPage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-            onClick={() => setSelected(null)}
+            onClick={handleCloseModal}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -548,23 +754,9 @@ const ApplicationsPage = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {editing ? (
-                    <>
-                      <button onClick={cancelEdit} className="btn-secondary text-xs px-3 py-1.5">Cancel</button>
-                      <button onClick={saveEdit} className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" /> Save
-                      </button>
-                    </>
-                  ) : (
-                    <button onClick={startEdit} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1">
-                      <Pencil className="w-3.5 h-3.5" /> Edit
-                    </button>
-                  )}
-                  <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
+                <button onClick={handleCloseModal} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
               </div>
 
               {/* Tabs */}
@@ -572,7 +764,7 @@ const ApplicationsPage = () => {
                 {tabs.map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => setActiveTab(t.id)}
+                    onClick={() => handleTabSwitch(t.id)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                       activeTab === t.id
                         ? 'bg-primary text-primary-foreground'
@@ -593,6 +785,41 @@ const ApplicationsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Unsaved changes dialog */}
+      <AlertDialog open={unsavedDialog !== null} onOpenChange={(open) => !open && setUnsavedDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved edits in this section. Would you like to save before continuing, or discard your changes?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                saveSectionEdit();
+                unsavedDialog?.action();
+                setUnsavedDialog(null);
+              }}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+            >
+              <Save className="w-3.5 h-3.5 mr-1.5" />
+              Save & Continue
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                cancelSectionEdit();
+                unsavedDialog?.action();
+                setUnsavedDialog(null);
+              }}
+            >
+              Discard & Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
