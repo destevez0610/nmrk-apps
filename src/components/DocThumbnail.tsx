@@ -55,8 +55,15 @@ const PdfPreview = ({ file }: { file: File }) => {
 };
 
 const DocThumbnail = ({ file }: { file: File }) => {
+  const real = isRealFile(file);
+
+  const previewUrl = useMemo(() => {
+    if (real && isImage(file)) return URL.createObjectURL(file);
+    return null;
+  }, [file, real]);
+
   // Guard: if file was deserialized from JSON it won't be a real File
-  if (!isRealFile(file)) {
+  if (!real) {
     return (
       <div className="rounded border border-border overflow-hidden bg-secondary w-full">
         <div className="aspect-[4/3] flex items-center justify-center overflow-hidden">
@@ -68,11 +75,6 @@ const DocThumbnail = ({ file }: { file: File }) => {
       </div>
     );
   }
-
-  const previewUrl = useMemo(() => {
-    if (isImage(file)) return URL.createObjectURL(file);
-    return null;
-  }, [file]);
 
   return (
     <div className="rounded border border-border overflow-hidden bg-secondary w-full">
