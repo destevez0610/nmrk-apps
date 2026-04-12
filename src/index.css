@@ -101,12 +101,17 @@
   .field-input {
     @apply w-full rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200;
   }
-  .field-input-error {
-    @apply border-destructive ring-1 ring-destructive/30 animate-shake;
-  }
   .field-error {
     @apply text-destructive text-xs mt-1 animate-fade-in;
   }
+
+  /* Auto-highlight inputs/selects/buttons when a .field-error sibling is present */
+  div:has(> .field-error) > .field-input,
+  div:has(> .field-error) > select.field-input,
+  div:has(> .field-error) > button.field-input {
+    @apply border-destructive ring-1 ring-destructive/30 animate-shake;
+  }
+
   .btn-primary {
     @apply bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium text-sm hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
   }
