@@ -35,6 +35,47 @@ type SortField = 'date' | 'company' | 'volume' | 'status';
 type SortDir = 'asc' | 'desc';
 
 /** Read-only field styled like a filled form input */
+const truncateName = (name: string, maxLen = 24): string => {
+  if (name.length <= maxLen) return name;
+  const ext = name.includes('.') ? '.' + name.split('.').pop() : '';
+  const base = name.slice(0, name.length - ext.length);
+  const keep = maxLen - ext.length - 3;
+  return base.slice(0, Math.max(keep, 6)) + '...' + ext;
+};
+
+const isImage = (file: File) => file.type.startsWith('image/');
+
+const DocThumbnail = ({ file, frosted = false }: { file: File; frosted?: boolean }) => {
+  const previewUrl = useMemo(() => {
+    if (isImage(file)) return URL.createObjectURL(file);
+    return null;
+  }, [file]);
+
+  return (
+    <div className="rounded border border-border overflow-hidden bg-secondary w-full">
+      <div className="aspect-[4/3] flex items-center justify-center overflow-hidden relative">
+        {previewUrl ? (
+          <img
+            src={previewUrl}
+            alt={file.name}
+            className={`w-full h-full object-cover ${frosted ? 'blur-[6px] brightness-90' : ''}`}
+          />
+        ) : (
+          <FileTextIcon className="w-8 h-8 text-muted-foreground" />
+        )}
+        {frosted && (
+          <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
+        )}
+      </div>
+      <div className="px-2 py-1 bg-card border-t border-border">
+        <p className="text-[10px] text-muted-foreground truncate" title={file.name}>
+          {truncateName(file.name)}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const ReadOnlyField = ({ label, value, optional }: { label: string; value: string | number | undefined | null; optional?: boolean }) => (
   <div>
     <label className="field-label">
@@ -226,7 +267,7 @@ const ApplicationsPage = () => {
     { id: 'processing', label: 'Processing', icon: CreditCard },
     { id: 'ownership', label: 'Ownership', icon: Users },
     { id: 'banking', label: 'Banking', icon: Landmark },
-    { id: 'documents', label: 'Documents', icon: FileText },
+    { id: 'documents', label: 'Documents', icon: FileTextIcon },
     { id: 'activity', label: 'Activity', icon: History },
   ];
 
