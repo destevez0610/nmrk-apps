@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { BUSINESS_STRUCTURES, INDUSTRY_TYPES, US_STATES, CANADIAN_PROVINCES } from '@/types/application';
 import { formatPhone } from '@/lib/formatPhone';
+import { formatEin } from '@/lib/formatEin';
+import { formatSsn } from '@/lib/formatSsn';
 
 interface Props {
   onNext: () => void;
@@ -66,14 +68,14 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
             <>
               <label className="field-label">Social Security Number *</label>
               <input className="field-input font-mono" placeholder="XXX-XX-XXXX" maxLength={11}
-                value={bp.ssn} onChange={(e) => update({ ssn: e.target.value })} />
+                value={bp.ssn} onChange={(e) => update({ ssn: formatSsn(e.target.value) })} />
               {errors.ssn && <p className="field-error">{errors.ssn}</p>}
             </>
           ) : (
             <>
               <label className="field-label">EIN (Employer ID) *</label>
               <input className="field-input font-mono" placeholder="XX-XXXXXXX" maxLength={10}
-                value={bp.ein} onChange={(e) => update({ ein: e.target.value })} />
+                value={bp.ein} onChange={(e) => update({ ein: formatEin(e.target.value) })} />
               {errors.ein && <p className="field-error">{errors.ein}</p>}
             </>
           )}
