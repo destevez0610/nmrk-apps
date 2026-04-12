@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { StoredApplication, MerchantApplication, CURRENT_PROVIDERS, PUSH_PROVIDERS } from '@/types/application';
+import { StoredApplication, MerchantApplication, CURRENT_PROVIDERS, PUSH_PROVIDERS, PushProviderId } from '@/types/application';
 import { getApplications, saveApplication } from '@/lib/applicationsStore';
-import { getActivityLog, addActivityEvent } from '@/lib/activityStore';
+import { getActivityLog, addActivityEvent, pushApplication } from '@/lib/activityStore';
 import { formatPhone } from '@/lib/formatPhone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
