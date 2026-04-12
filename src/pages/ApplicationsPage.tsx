@@ -1,18 +1,21 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { StoredApplication, MerchantApplication, CURRENT_PROVIDERS } from '@/types/application';
 import { getApplications, saveApplication } from '@/lib/applicationsStore';
+import { getActivityLog, addActivityEvent } from '@/lib/activityStore';
 import { formatPhone } from '@/lib/formatPhone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, X, Pencil, Check, ArrowLeft,
   Building2, Users, CreditCard, Landmark, FileText,
-  ArrowUpDown, Filter, Save,
+  ArrowUpDown, Filter, Save, Send, History,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import PushAppModal from '@/components/PushAppModal';
+import ActivityTrail from '@/components/ActivityTrail';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   'pre-qual': { label: 'Pre-Qualified', color: 'bg-primary/10 text-primary' },
@@ -94,6 +97,7 @@ const ApplicationsPage = () => {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('preQual');
   const [unsavedDialog, setUnsavedDialog] = useState<{ action: () => void } | null>(null);
+  const [pushModalOpen, setPushModalOpen] = useState(false);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -223,6 +227,7 @@ const ApplicationsPage = () => {
     { id: 'ownership', label: 'Ownership', icon: Users },
     { id: 'banking', label: 'Banking', icon: Landmark },
     { id: 'documents', label: 'Documents', icon: FileText },
+    { id: 'activity', label: 'Activity', icon: History },
   ];
 
   const EditField = ({ label, path, type = 'text', options }: { label: string; path: string; type?: string; options?: string[] }) => {
