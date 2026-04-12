@@ -1,12 +1,65 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
-import { Upload, X, FileText } from 'lucide-react';
+import { Upload, X, FileText, Image as ImageIcon } from 'lucide-react';
 import { scrollToFirstError } from '@/lib/scrollToError';
 
 interface Props {
   onNext: () => void;
   onPrev: () => void;
 }
+
+/** Truncate filename: keep start + extension, ellipsis in the middle */
+const truncateName = (name: string, maxLen = 20): string => {
+  if (name.length <= maxLen) return name;
+  const ext = name.includes('.') ? '.' + name.split('.').pop() : '';
+  const base = name.slice(0, name.length - ext.length);
+  const keep = maxLen - ext.length - 3; // 3 for "..."
+  return base.slice(0, Math.max(keep, 6)) + '...' + ext;
+};
+
+/** Check if file is an image */
+const isImage = (file: File) => file.type.startsWith('image/');
+
+/** Thumbnail component for uploaded files */
+const FileThumbnail = ({
+  file,
+  onClear,
+}: {
+  file: File;
+  onClear: () => void;
+}) => {
+  const previewUrl = useMemo(() => {
+    if (isImage(file)) return URL.createObjectURL(file);
+    return null;
+  }, [file]);
+
+  return (
+    <div className="relative group rounded-lg border border-border overflow-hidden bg-secondary">
+      <div className="aspect-[4/3] flex items-center justify-center overflow-hidden">
+        {previewUrl ? (
+          <img src={previewUrl} alt={file.name} className="w-full h-full object-cover" />
+        ) : (
+          <FileText className="w-10 h-10 text-muted-foreground" />
+        )}
+      </div>
+      <div className="px-2 py-1.5 bg-card border-t border-border">
+        <p className="text-xs text-foreground truncate" title={file.name}>
+          {truncateName(file.name)}
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          {(file.size / 1024).toFixed(0)} KB
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onClear(); }}
+        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <X className="w-3 h-3" />
+      </button>
+    </div>
+  );
+};
 
 const DocumentUpload = ({ onNext, onPrev }: Props) => {
   const { data, updateData } = useApplication();
@@ -16,7 +69,7 @@ const DocumentUpload = ({ onNext, onPrev }: Props) => {
 
   const update = (fields: Partial<typeof docs>) => updateData('documents', fields);
 
-  const FileDropZone = ({
+  const DropZone = ({
     label,
     file,
     onFile,
@@ -31,29 +84,21 @@ const DocumentUpload = ({ onNext, onPrev }: Props) => {
   }) => (
     <div>
       <label className="field-label">{label}</label>
-      <div
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); e.dataTransfer.files[0] && onFile(e.dataTransfer.files[0]); }}
-        onClick={() => document.getElementById(id)?.click()}
-        className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/40 transition-colors cursor-pointer"
-      >
-        {file ? (
-          <div className="flex items-center justify-center gap-2">
-            <FileText className="w-4 h-4 text-primary" />
-            <span className="text-sm text-foreground">{file.name}</span>
-            <button type="button" onClick={(e) => { e.stopPropagation(); onClear(); }} className="text-destructive hover:opacity-70">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            <Upload className="w-6 h-6 mx-auto text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">Drop or click to upload</p>
-          </div>
-        )}
-        <input id={id} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
-          onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-      </div>
+      {file ? (
+        <FileThumbnail file={file} onClear={onClear} />
+      ) : (
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => { e.preventDefault(); e.dataTransfer.files[0] && onFile(e.dataTransfer.files[0]); }}
+          onClick={() => document.getElementById(id)?.click()}
+          className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/40 transition-colors cursor-pointer"
+        >
+          <Upload className="w-6 h-6 mx-auto text-muted-foreground" />
+          <p className="text-xs text-muted-foreground mt-1">Drop or click to upload</p>
+          <input id={id} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+        </div>
+      )}
     </div>
   );
 
@@ -78,14 +123,14 @@ const DocumentUpload = ({ onNext, onPrev }: Props) => {
 
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-3">Driver's License / Government ID</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <FileDropZone label="Front *" file={docs.driversLicenseFront} id="dl-front"
+            <DropZone label="Front *" file={docs.driversLicenseFront} id="dl-front"
               onFile={(f) => update({ driversLicenseFront: f })} onClear={() => update({ driversLicenseFront: null })} />
             {errors.front && <p className="field-error">{errors.front}</p>}
           </div>
           <div>
-            <FileDropZone label="Back *" file={docs.driversLicenseBack} id="dl-back"
+            <DropZone label="Back *" file={docs.driversLicenseBack} id="dl-back"
               onFile={(f) => update({ driversLicenseBack: f })} onClear={() => update({ driversLicenseBack: null })} />
             {errors.back && <p className="field-error">{errors.back}</p>}
           </div>
@@ -102,17 +147,13 @@ const DocumentUpload = ({ onNext, onPrev }: Props) => {
         </p>
 
         {docs.bankStatements.length > 0 && (
-          <div className="space-y-2 mb-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
             {docs.bankStatements.map((f, i) => (
-              <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-secondary text-sm">
-                <FileText className="w-4 h-4 text-primary" />
-                <span className="flex-1 text-foreground">{f.name}</span>
-                <button type="button" onClick={() =>
-                  update({ bankStatements: docs.bankStatements.filter((_, j) => j !== i) })
-                } className="text-destructive hover:opacity-70">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              <FileThumbnail
+                key={i}
+                file={f}
+                onClear={() => update({ bankStatements: docs.bankStatements.filter((_, j) => j !== i) })}
+              />
             ))}
           </div>
         )}
