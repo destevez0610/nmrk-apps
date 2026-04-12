@@ -121,6 +121,14 @@
   .btn-accent {
     @apply bg-accent text-accent-foreground px-6 py-2.5 rounded-lg font-medium text-sm hover:opacity-90 transition-all duration-200;
   }
+  .field-prefilled {
+    @apply ring-2 ring-primary/25 border-primary/30;
+    box-shadow: 0 0 8px 0 hsl(var(--primary) / 0.12);
+  }
+  .field-prefilled:focus {
+    @apply ring-2 ring-ring border-transparent;
+    box-shadow: none;
+  }
 }
 
 @media print {
