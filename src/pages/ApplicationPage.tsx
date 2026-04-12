@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ApplicationProvider, useApplication } from '@/context/ApplicationContext';
 import ProgressBar from '@/components/ProgressBar';
@@ -9,9 +9,9 @@ import OwnershipPrincipals from '@/components/steps/OwnershipPrincipals';
 import BankingSettlement from '@/components/steps/BankingSettlement';
 import DocumentUpload from '@/components/steps/DocumentUpload';
 import ReviewSubmit from '@/components/steps/ReviewSubmit';
+import SectionChecklist from '@/components/SectionChecklist';
 import { useAutoSave, loadDraft, clearDraft } from '@/hooks/useAutoSave';
 import { Save, ClipboardList } from 'lucide-react';
-import { useState } from 'react';
 
 const STEP_LABELS = [
   'Business Profile',

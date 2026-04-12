@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useApplication } from '@/context/ApplicationContext';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Loader2, Pencil, FileText, Save } from 'lucide-react';
+import { CheckCircle2, Loader2, Pencil, FileText, Save, Printer } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
