@@ -39,8 +39,6 @@ const BusinessProfile = ({ onNext, onPrev }: Props) => {
       setPreFilledFields((prev) => { const n = new Set(prev); n.delete(fieldKey); return n; });
     }
   };
-  const isSoleProp = bp.businessStructure === 'Sole Proprietorship';
-  const states = data.preQualification.location === 'Canada' ? CANADIAN_PROVINCES : US_STATES;
 
   const validate = () => {
     const e: Record<string, string> = {};
