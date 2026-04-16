@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ActivityEvent, PushProviderId } from '@/types/application';
 import { Send, Edit, AlertCircle, CheckCircle2, MessageSquare, RotateCw, PlusCircle, ArrowRightLeft, SendHorizonal, User } from 'lucide-react';
 
@@ -13,6 +13,8 @@ const EVENT_CONFIG: Record<string, { icon: typeof Send; color: string }> = {
   resend: { icon: RotateCw, color: 'text-primary' },
 };
 
+const AUTHOR_STORAGE_KEY = 'activity_author_name';
+
 interface Props {
   events: ActivityEvent[];
   onAddNote?: (note: string, author: string) => void;
@@ -23,10 +25,16 @@ const ActivityTrail = ({ events, onAddNote, onResend }: Props) => {
   const [noteText, setNoteText] = useState('');
   const [authorName, setAuthorName] = useState('');
 
+  useEffect(() => {
+    const saved = localStorage.getItem(AUTHOR_STORAGE_KEY);
+    if (saved) setAuthorName(saved);
+  }, []);
+
   const handleSubmitNote = () => {
     const trimmed = noteText.trim();
     const author = authorName.trim();
     if (!trimmed || !author || !onAddNote) return;
+    localStorage.setItem(AUTHOR_STORAGE_KEY, author);
     onAddNote(trimmed, author);
     setNoteText('');
   };
